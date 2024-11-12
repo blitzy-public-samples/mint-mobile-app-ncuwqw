@@ -1,0 +1,334 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.5.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "9.5.0"
+    }
+  ],
+  "title": "Mint Replica Redis Dashboard",
+  "uid": "mint-replica-redis",
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 36,
+  "version": 1,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "title": "Connected Clients",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "redis_connected_clients{job=\"redis-metrics\"}",
+          "legendFormat": "Connected Clients",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "description": "Number of clients currently connected to Redis",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 200 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Memory Usage",
+      "type": "gauge",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes{job=\"redis-metrics\"}",
+          "legendFormat": "Memory Used",
+          "refId": "A"
+        }
+      ],
+      "thresholds": {
+        "steps": [
+          { "value": null, "color": "green" },
+          { "value": 536870912, "color": "yellow" },
+          { "value": 1073741824, "color": "red" }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "max": 2147483648
+        }
+      },
+      "description": "Current memory usage of Redis instance"
+    },
+    {
+      "title": "Operations Rate",
+      "type": "graph",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "rate(redis_commands_total{job=\"redis-metrics\"}[5m])",
+          "legendFormat": "{{cmd}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "yaxes": [
+        {
+          "format": "ops",
+          "label": "Operations/sec"
+        },
+        {
+          "format": "short",
+          "show": false
+        }
+      ],
+      "description": "Rate of Redis operations by command type"
+    },
+    {
+      "title": "Cache Hit Rate",
+      "type": "graph",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "rate(redis_keyspace_hits_total{job=\"redis-metrics\"}[5m]) / (rate(redis_keyspace_hits_total{job=\"redis-metrics\"}[5m]) + rate(redis_keyspace_misses_total{job=\"redis-metrics\"}[5m])) * 100",
+          "legendFormat": "Hit Rate %",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "yaxes": [
+        {
+          "format": "percent",
+          "max": 100,
+          "min": 0
+        },
+        {
+          "format": "short",
+          "show": false
+        }
+      ],
+      "description": "Percentage of successful cache hits"
+    },
+    {
+      "title": "Evicted Keys",
+      "type": "graph",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "rate(redis_evicted_keys_total{job=\"redis-metrics\"}[5m])",
+          "legendFormat": "Eviction Rate",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "Keys/sec"
+        },
+        {
+          "format": "short",
+          "show": false
+        }
+      ],
+      "description": "Rate of key evictions due to memory limits"
+    },
+    {
+      "title": "Network Traffic",
+      "type": "graph",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "rate(redis_net_input_bytes_total{job=\"redis-metrics\"}[5m])",
+          "legendFormat": "Input Bytes/s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(redis_net_output_bytes_total{job=\"redis-metrics\"}[5m])",
+          "legendFormat": "Output Bytes/s",
+          "refId": "B"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "yaxes": [
+        {
+          "format": "bytes",
+          "label": "Throughput"
+        },
+        {
+          "format": "short",
+          "show": false
+        }
+      ],
+      "description": "Network traffic throughput for Redis instance"
+    },
+    {
+      "title": "Latency",
+      "type": "graph",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "redis_commands_duration_seconds_total{job=\"redis-metrics\"}",
+          "legendFormat": "Command Duration",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Duration"
+        },
+        {
+          "format": "short",
+          "show": false
+        }
+      ],
+      "description": "Command execution latency"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "query": "label_values(redis_up, instance)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      },
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "constant",
+        "label": "Prometheus",
+        "hide": 0,
+        "query": "Prometheus",
+        "current": {
+          "value": "Prometheus",
+          "text": "Prometheus"
+        }
+      }
+    ]
+  },
+  "tags": ["redis", "cache", "monitoring"],
+  "editable": true,
+  "links": [],
+  "description": "Redis monitoring dashboard for Mint Replica Lite system",
+  "id": null,
+  "graphTooltip": 1,
+  "style": "dark",
+  "weekStart": "monday",
+  "liveNow": false,
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  }
+}

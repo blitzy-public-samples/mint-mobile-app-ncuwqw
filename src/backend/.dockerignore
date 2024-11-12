@@ -1,0 +1,69 @@
+# - Review excluded patterns to ensure no project-specific files are missing
+# - Verify that all sensitive files specific to your environment are excluded
+# - Ensure build-essential files are NOT included in this ignore list
+
+# Python bytecode and cache files
+# Addresses: Technical Specification/2.5.2 Deployment Architecture - Optimized container builds
+*.pyc
+__pycache__
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+# Addresses: Technical Specification/2.5.2 Deployment Architecture - Docker is used for containerization
+env/
+venv/
+
+# Environment and configuration files
+# Addresses: Technical Specification/2.4 Security Architecture - Secure deployment configuration
+.env
+.env.example
+.flaskenv
+
+# Version control
+# Addresses: Technical Specification/2.4 Security Architecture - Preventing sensitive files from container images
+.git
+.gitignore
+
+# Editor and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Documentation
+docs/
+README.md
+LICENSE
+
+# Test files
+# Addresses: Technical Specification/2.4 Security Architecture - Preventing test artifacts
+tests/
+
+# Logs
+# Addresses: Technical Specification/2.4 Security Architecture - Secure deployment configuration
+*.log
+logs/
+
+# System files
+.DS_Store
+
+# Dependencies and package management
+# Addresses: Technical Specification/2.5.2 Deployment Architecture - Optimized container builds
+node_modules/
+poetry.lock
+
+# Configuration files
+# Addresses: Technical Specification/2.5.2 Deployment Architecture - Docker containerization
+mypy.ini
+alembic.ini
+docker-compose.yml
+.dockerignore
+
+# Infrastructure files
+# Addresses: Technical Specification/2.4 Security Architecture - Secure deployment configuration
+infrastructure/

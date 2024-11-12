@@ -1,0 +1,94 @@
+# Human Tasks:
+# 1. Verify that any custom build output directories specific to your project are included
+# 2. If using additional package managers beyond CocoaPods/Carthage/SPM, add their paths
+# 3. Ensure any additional secret files or API key files specific to your setup are listed
+# 4. Review excluded certificates and provisioning profiles match your security requirements
+
+# REQ: iOS Native Application - Build artifact exclusions for Swift/UIKit application
+# Build artifacts and derived data
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# REQ: iOS Native Application - Dependency management exclusions
+# Package manager directories
+Pods/
+Carthage/Build/
+.swiftpm/
+Package.resolved
+
+# REQ: Security Infrastructure - Protection of sensitive files and credentials
+# Certificates, provisioning profiles and sensitive configurations
+*.p12
+*.cer
+*.mobileprovision
+*/GoogleService-Info.plist
+*/ApiKeys.plist
+*/Secrets.plist
+
+# IDE and editor specific files
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+*.xcworkspace
+!default.xcworkspace
+
+# System and temporary files
+.DS_Store
+.env
+*.log
+tmp/
+
+# Fastlane specific
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Additional build artifacts
+*.xcarchive
+*.xcresult
+
+# Crash logs
+crash.log
+syslog
+
+# Code coverage
+*.gcno
+*.gcda
+*.gcov
+coverage.xml
+coverage/
+
+# App thinning
+*.app.dSYM.zip
+*.ipa.dSYM.zip
+App Thinning Size Report.txt
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+.build/
+Packages/
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace
+.netrc

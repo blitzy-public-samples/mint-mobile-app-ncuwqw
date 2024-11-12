@@ -1,0 +1,285 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.5.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "9.5.0"
+    }
+  ],
+  "title": "Mint Replica Backend Dashboard",
+  "uid": "mint-replica-backend",
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "title": "API Response Times",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"mint-replica-backend\"}[5m]))",
+          "legendFormat": "95th Percentile",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.3: Performance metrics for API response times",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 0.5, "color": "yellow" },
+              { "value": 1, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Request Rate",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"mint-replica-backend\"}[5m])) by (status_code)",
+          "legendFormat": "{{status_code}}",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.1: Infrastructure monitoring of request throughput"
+    },
+    {
+      "title": "CPU Usage",
+      "type": "gauge",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"backend-api.*\"}[5m])) by (pod)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.3: CPU utilization metrics for scaling decisions",
+      "fieldConfig": {
+        "defaults": {
+          "max": 2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 0.5, "color": "yellow" },
+              { "value": 0.9, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Memory Usage",
+      "type": "gauge",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(container_memory_usage_bytes{pod=~\"backend-api.*\"}) by (pod)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.3: Memory utilization metrics for scaling decisions",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "max": 2147483648,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 536870912, "color": "yellow" },
+              { "value": 1610612736, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Database Connections",
+      "type": "stat",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(pg_stat_activity_count{job=\"postgres-metrics\"})",
+          "legendFormat": "Active Connections",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.1: Database connection monitoring"
+    },
+    {
+      "title": "Redis Operations",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(redis_commands_total{job=\"redis-metrics\"}[5m])",
+          "legendFormat": "{{cmd}}",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.1: Redis operations monitoring"
+    },
+    {
+      "title": "HTTP Error Rate",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"mint-replica-backend\", status_code=~\"5.*\"}[5m])) / sum(rate(http_requests_total{job=\"mint-replica-backend\"}[5m])) * 100",
+          "legendFormat": "Error Rate %",
+          "refId": "A"
+        }
+      ],
+      "description": "REQ 2.5.4: Health monitoring of error rates",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "yellow" },
+              { "value": 5, "color": "red" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(kube_pod_info, namespace)",
+        "refresh": 2
+      },
+      {
+        "name": "pod",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(kube_pod_info{namespace=\"$namespace\"}, pod)",
+        "refresh": 2
+      }
+    ]
+  },
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["kubernetes", "backend", "monitoring"],
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": false,
+  "weekStart": ""
+}

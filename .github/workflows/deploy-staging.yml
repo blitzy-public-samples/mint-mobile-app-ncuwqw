@@ -1,0 +1,193 @@
+# Human Tasks:
+# 1. Configure AWS IAM OIDC provider for GitHub Actions
+# 2. Set up AWS_ACCOUNT_ID secret in GitHub repository
+# 3. Configure AWS IAM role with necessary permissions for EKS, ECR, and S3
+# 4. Set up monitoring alerts for deployment status
+# 5. Review resource quotas and scaling limits in staging environment
+
+# GitHub Actions workflow for staging deployment
+# Addresses requirements:
+# - Staging Environment Deployment (7.1 Deployment Environment/Environment Specifications)
+# - CI/CD Pipeline (7.5 CI/CD Pipeline/Pipeline Stages)
+# - Container Orchestration (7.3 Containerization/Container Specifications)
+
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      deploy_version:
+        description: 'Version to deploy'
+        required: true
+        type: string
+
+# Environment configuration
+env:
+  ENVIRONMENT: staging
+  AWS_REGION: us-west-2
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+# Concurrency control to prevent parallel deployments
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+# Required permissions for GitHub OIDC
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+jobs:
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      eks_cluster_id: ${{ steps.terraform-apply.outputs.eks_cluster_id }}
+      eks_cluster_endpoint: ${{ steps.terraform-apply.outputs.eks_cluster_endpoint }}
+      rds_endpoint: ${{ steps.terraform-apply.outputs.rds_endpoint }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-staging
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.x
+
+      - name: Initialize Terraform
+        working-directory: infrastructure/terraform/environments/staging
+        run: terraform init
+
+      - name: Plan infrastructure changes
+        working-directory: infrastructure/terraform/environments/staging
+        run: terraform plan -out=tfplan
+
+      - name: Apply infrastructure changes
+        id: terraform-apply
+        working-directory: infrastructure/terraform/environments/staging
+        run: |
+          terraform apply -auto-approve tfplan
+          echo "eks_cluster_id=$(terraform output -raw eks_cluster_id)" >> $GITHUB_OUTPUT
+          echo "eks_cluster_endpoint=$(terraform output -raw eks_cluster_endpoint)" >> $GITHUB_OUTPUT
+          echo "rds_endpoint=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    name: Build and Push Images
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      backend_image_tag: ${{ steps.build-tags.outputs.backend_tag }}
+      web_image_tag: ${{ steps.build-tags.outputs.web_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-staging
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Generate build tags
+        id: build-tags
+        run: |
+          VERSION=${{ github.event.inputs.deploy_version || github.sha }}
+          echo "backend_tag=${VERSION}" >> $GITHUB_OUTPUT
+          echo "web_tag=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build backend image
+        run: |
+          docker build -t ${{ env.ECR_REGISTRY }}/mint-replica-backend:${{ steps.build-tags.outputs.backend_tag }} \
+            --build-arg ENV=staging \
+            -f backend/Dockerfile .
+          docker push ${{ env.ECR_REGISTRY }}/mint-replica-backend:${{ steps.build-tags.outputs.backend_tag }}
+
+      - name: Build web image
+        run: |
+          docker build -t ${{ env.ECR_REGISTRY }}/mint-replica-web:${{ steps.build-tags.outputs.web_tag }} \
+            --build-arg ENV=staging \
+            -f web/Dockerfile .
+          docker push ${{ env.ECR_REGISTRY }}/mint-replica-web:${{ steps.build-tags.outputs.web_tag }}
+
+  deploy-applications:
+    name: Deploy Applications
+    needs: [deploy-infrastructure, build-and-push]
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.get-application-url.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-staging
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} \
+            --name ${{ needs.deploy-infrastructure.outputs.eks_cluster_id }}
+
+      - name: Update backend deployment
+        run: |
+          kubectl set image deployment/backend-api \
+            backend-api=${{ env.ECR_REGISTRY }}/mint-replica-backend:${{ needs.build-and-push.outputs.backend_image_tag }} \
+            -n mint-replica-backend
+
+      - name: Update web deployment
+        run: |
+          kubectl set image deployment/web-frontend \
+            web-frontend=${{ env.ECR_REGISTRY }}/mint-replica-web:${{ needs.build-and-push.outputs.web_image_tag }} \
+            -n mint-replica-web
+
+      - name: Verify deployments
+        run: |
+          kubectl rollout status deployment/backend-api -n mint-replica-backend --timeout=300s
+          kubectl rollout status deployment/web-frontend -n mint-replica-web --timeout=300s
+
+      - name: Health check validation
+        run: |
+          BACKEND_URL=$(kubectl get svc backend-api -n mint-replica-backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          WEB_URL=$(kubectl get svc web-frontend -n mint-replica-web -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          
+          for i in {1..30}; do
+            if curl -sf ${BACKEND_URL}/health && curl -sf ${WEB_URL}/health; then
+              echo "Health checks passed"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Health checks failed"
+              exit 1
+            fi
+            sleep 10
+          done
+
+      - name: Get application URL
+        id: get-application-url
+        run: |
+          WEB_URL=$(kubectl get svc web-frontend -n mint-replica-web -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "url=https://${WEB_URL}" >> $GITHUB_OUTPUT
+
+      - name: Traffic cutover
+        run: |
+          kubectl annotate service web-frontend -n mint-replica-web \
+            service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags="Environment=staging,Version=${{ needs.build-and-push.outputs.web_image_tag }}"

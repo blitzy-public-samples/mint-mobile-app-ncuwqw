@@ -1,0 +1,96 @@
+# Human Tasks:
+# 1. Verify AWS IAM role is configured with appropriate S3 permissions
+# 2. Confirm S3 bucket 'mint-replica-traces' exists in us-west-2 region
+# 3. Set file permissions to 0644
+# 4. Set file ownership to tempo:tempo
+# 5. Ensure network policies allow specified ports (3200, 9095, 14250, 14268, 4317, 4318)
+
+# Tempo v1.5.0 Configuration
+# OpenTelemetry Collector v0.70.0 Integration
+
+# Main server configuration
+# REQ: Distributed Tracing - Configures core Tempo server settings
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+  log_level: info
+
+# Distributor configuration for trace ingestion
+# REQ: System Observability - Implements multiple protocol support for trace collection
+distributor:
+  receivers:
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:14250"
+        thrift_http:
+          endpoint: "0.0.0.0:14268"
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+
+# Ingester configuration
+# REQ: Request Monitoring - Defines trace retention and block management
+ingester:
+  trace_retention: 168h  # 7 days retention
+  max_block_duration: 1h
+  complete_block_timeout: 30m
+
+# Compactor configuration
+# REQ: System Observability - Manages trace data lifecycle
+compactor:
+  compaction_window: 1h
+  retention: 168h  # Aligned with ingester retention
+  compaction_cycle: 30m
+
+# Storage configuration
+# REQ: Distributed Tracing - Configures S3 backend for trace storage
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: mint-replica-traces
+      endpoint: s3.amazonaws.com
+      region: us-west-2
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+# Query service configuration
+# REQ: System Observability - Configures trace query capabilities
+querier:
+  max_concurrent_queries: 10
+  query_timeout: 30s
+  max_bytes_per_trace: 50MB
+
+# Overrides configuration
+# REQ: Request Monitoring - Defines per-tenant limits
+overrides:
+  max_bytes_per_trace: 50MB
+  max_search_duration: 30s
+
+# Search configuration
+# REQ: System Observability - Enables trace search functionality
+search_enabled: true
+
+# Metrics configuration
+# REQ: System Observability - Integration with Prometheus monitoring
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: mint-replica
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+# Live tailing configuration
+# REQ: Request Monitoring - Enables real-time trace viewing
+querier_local:
+  max_live_traces: 100
+  max_live_traces_age: 1h

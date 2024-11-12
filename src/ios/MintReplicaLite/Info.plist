@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- HUMAN TASKS:
+    1. Update CFBundleVersion and CFBundleShortVersionString before each release
+    2. Configure proper APNS certificates for push notifications
+    3. Verify proper entitlements are enabled in Xcode project
+    4. Test all permission prompts on physical devices
+    5. Configure proper URL scheme handling in AppDelegate/SceneDelegate -->
+
+    <!-- Basic Application Information -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <!-- Localization Support -->
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>es</string>
+        <string>fr</string>
+    </array>
+
+    <!-- Minimum iOS Version Requirement -->
+    <key>MinimumOSVersion</key>
+    <string>14.0</string>
+
+    <!-- Device Support -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>armv8</string>
+        <string>accelerometer</string>
+        <string>network-connectivity</string>
+    </array>
+
+    <!-- Device Family Support -->
+    <key>UIDeviceFamily</key>
+    <array>
+        <string>1</string>
+        <string>2</string>
+    </array>
+
+    <!-- Interface Orientation Support -->
+    <key>UISupportedInterfaceOrientations~iphone</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- Launch Screen Configuration -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <!-- Privacy Permissions -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>Mint Replica Lite uses Face ID to securely authenticate you and protect your financial data</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Mint Replica Lite needs camera access to scan documents and receipts</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Mint Replica Lite needs photo library access to upload documents and receipts</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Mint Replica Lite uses your location to identify nearby transactions and merchants</string>
+    <key>NSLocationUsageDescription</key>
+    <string>Location services are used to enhance transaction categorization and merchant identification</string>
+
+    <!-- Push Notification Configuration -->
+    <key>aps-environment</key>
+    <string>development</string>
+
+    <!-- Data Protection -->
+    <key>com.apple.developer.default-data-protection</key>
+    <string>NSFileProtectionComplete</string>
+
+    <!-- URL Scheme Configuration -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>mintreplicalite</string>
+            </array>
+            <key>CFBundleURLName</key>
+            <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+        </dict>
+    </array>
+
+    <!-- Security Configuration -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>https</string>
+        <string>tel</string>
+        <string>mailto</string>
+    </array>
+</dict>
+</plist>

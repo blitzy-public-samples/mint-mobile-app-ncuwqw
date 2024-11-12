@@ -1,0 +1,85 @@
+{
+  // HUMAN TASKS:
+  // 1. Verify all @types/* packages are installed with correct versions in package.json:
+  //    - @types/react@^18.0.0
+  //    - @types/react-native@^0.70.0
+  //    - @types/node@^16.0.0
+  // 2. Ensure path aliases match the project's folder structure
+  // 3. Configure IDE/editor to recognize path aliases
+
+  // Requirement: Cross-platform Development - Configure TypeScript for React Native Web
+  "compilerOptions": {
+    // Language and Environment Configuration
+    "target": "es6",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "jsx": "react-native",
+
+    // Module Resolution
+    "module": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@components/*": ["components/*"],
+      "@screens/*": ["screens/*"],
+      "@navigation/*": ["navigation/*"],
+      "@store/*": ["store/*"],
+      "@services/*": ["services/*"],
+      "@utils/*": ["utils/*"],
+      "@hooks/*": ["hooks/*"],
+      "@assets/*": ["assets/*"],
+      "@styles/*": ["styles/*"],
+      "@constants/*": ["constants/*"]
+    },
+    "rootDirs": ["src"],
+    "typeRoots": ["node_modules/@types"],
+
+    // Requirement: Type Safety - Enable strict type checking features
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // JavaScript Support
+    "allowJs": true,
+    "skipLibCheck": true,
+
+    // Interop Constraints
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    // Source Maps
+    "sourceMap": true,
+    "inlineSources": true,
+    "sourceRoot": "/",
+
+    // Emit
+    "noEmit": true,
+    "resolveJsonModule": true
+  },
+
+  // Files to Include/Exclude
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
+  ]
+}

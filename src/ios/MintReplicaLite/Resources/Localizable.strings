@@ -1,0 +1,101 @@
+/* HUMAN TASKS:
+ * 1. Ensure this file is added to the Xcode project's "Localizable.strings" section
+ * 2. Create additional language-specific versions of this file for supported languages (es.lproj/Localizable.strings, fr.lproj/Localizable.strings)
+ * 3. Verify string encoding is set to UTF-16 in Xcode file inspector
+ * 4. Run localization audit using Xcode's localization features to ensure all strings are properly externalized
+ */
+
+/* Common strings - Requirement: Multi-platform user authentication */
+"app_name" = "Mint Replica Lite";
+"ok" = "OK";
+"cancel" = "Cancel";
+"done" = "Done";
+"save" = "Save";
+"delete" = "Delete";
+"edit" = "Edit";
+"back" = "Back";
+
+/* Authentication strings - Requirement: Multi-platform user authentication */
+"login_title" = "Login";
+"register_title" = "Register";
+"email_placeholder" = "Email";
+"password_placeholder" = "Password";
+"biometric_prompt" = "Use Face ID/Touch ID to login";
+"forgot_password" = "Forgot Password?";
+"logout" = "Logout";
+
+/* Dashboard strings - Requirement: Financial tracking and analysis */
+"net_worth" = "Net Worth";
+"accounts" = "Accounts";
+"recent_transactions" = "Recent Transactions";
+"budget_overview" = "Budget Overview";
+"goals_progress" = "Goals Progress";
+
+/* Account strings - Requirement: Financial tracking and analysis */
+"checking" = "Checking";
+"savings" = "Savings";
+"credit" = "Credit Cards";
+"investment" = "Investment";
+"add_account" = "Add Account";
+"link_account" = "Link Bank Account";
+"account_details" = "Account Details";
+
+/* Transaction strings - Requirement: Financial tracking and analysis */
+"all_transactions" = "All Transactions";
+"add_transaction" = "Add Transaction";
+"edit_transaction" = "Edit Transaction";
+"amount" = "Amount";
+"category" = "Category";
+"date" = "Date";
+"notes" = "Notes";
+
+/* Budget strings - Requirement: Budget management */
+"budgets" = "Budgets";
+"create_budget" = "Create Budget";
+"edit_budget" = "Edit Budget";
+"budget_name" = "Budget Name";
+"budget_amount" = "Budget Amount";
+"budget_period" = "Budget Period";
+"monthly" = "Monthly";
+"remaining" = "Remaining";
+
+/* Goal strings - Requirement: Budget management */
+"goals" = "Goals";
+"create_goal" = "Create Goal";
+"edit_goal" = "Edit Goal";
+"goal_name" = "Goal Name";
+"target_amount" = "Target Amount";
+"target_date" = "Target Date";
+"progress" = "Progress";
+
+/* Investment strings - Requirement: Investment tracking */
+"portfolio" = "Portfolio";
+"holdings" = "Holdings";
+"performance" = "Performance";
+"allocation" = "Asset Allocation";
+"stocks" = "Stocks";
+"bonds" = "Bonds";
+"cash" = "Cash";
+
+/* Settings strings - Requirement: Multi-platform user authentication */
+"settings" = "Settings";
+"profile" = "Profile";
+"security" = "Security";
+"notifications" = "Notifications";
+"preferences" = "Preferences";
+"about" = "About";
+
+/* Error strings - Requirement: Multi-platform user authentication */
+"generic_error" = "Something went wrong. Please try again.";
+"network_error" = "Network connection error. Please check your connection.";
+"auth_error" = "Authentication failed. Please try again.";
+"validation_error" = "Please check your input and try again.";
+"sync_error" = "Unable to sync data. Please try again later.";
+
+/* Alert strings - Requirement: Budget management */
+"success" = "Success";
+"warning" = "Warning";
+"error" = "Error";
+"info" = "Information";
+"budget_alert" = "Budget Alert: You're close to your spending limit";
+"goal_achieved" = "Congratulations! You've reached your goal!";

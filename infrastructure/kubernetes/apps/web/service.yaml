@@ -1,0 +1,86 @@
+# Human Tasks:
+# 1. Verify ${ENV} variable is set in Terraform for environment substitution
+# 2. Ensure network policies are properly configured in the cluster
+# 3. Validate that web-frontend deployment is running and healthy
+# 4. Confirm firewall rules allow traffic to service port 80
+# 5. Review service monitoring and logging configuration
+
+# Kubernetes version: v1.24+
+
+---
+# Web Frontend Service Configuration
+# Addresses requirements:
+# - Web Application Access (2.1 High-Level Architecture Overview/Client Layer)
+# - Load Balancing (2.5.1 Production Environment)
+# - High Availability (2.5.4 Availability Architecture)
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-frontend
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+    version: v1
+    managed-by: terraform
+  annotations:
+    kubernetes.io/description: "Web frontend service for Mint Replica Lite application"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-level: "restricted"
+
+spec:
+  # Using ClusterIP for internal access only
+  # This supports the internal_only: true requirement from load_balancing config
+  type: ClusterIP
+
+  # Port configuration for the service
+  # Exposes port 80 externally and forwards to container port 3000
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+
+  # Selector matches the labels defined in web-frontend deployment
+  # This ensures proper pod selection for load balancing
+  selector:
+    app: mint-replica-lite
+    component: web
+
+  # Disable session affinity as per load_balancing configuration
+  # This enables round-robin load balancing across pods
+  sessionAffinity: None
+
+---
+# Network Policy for Web Frontend Service
+# Implements the network_policies configuration
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-frontend-network-policy
+  namespace: mint-replica-web
+spec:
+  podSelector:
+    matchLabels:
+      app: mint-replica-lite
+      component: web
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow incoming traffic from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: mint-replica-monitoring
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    # Allow outgoing traffic to backend namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: mint-replica-backend

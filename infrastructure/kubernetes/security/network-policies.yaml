@@ -1,0 +1,126 @@
+# Human Tasks:
+# 1. Verify kube-dns service is running in kube-system namespace
+# 2. Ensure all application pods are labeled with app=mint-replica-lite
+# 3. Validate network policy enforcement is enabled on the cluster
+# 4. Test DNS resolution works after applying policies
+# 5. Monitor policy logs for any blocked traffic
+
+# Kubernetes version: v1.24+
+
+---
+# Default deny-all policy for zero-trust networking model
+# Addresses requirement: Network Security (6. Security Considerations/6.2 Data Security)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  annotations:
+    kubernetes.io/description: "Default deny all ingress and egress traffic"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/compliance: "pci-dss,hipaa,gdpr"
+spec:
+  podSelector: {}  # Applies to all pods in namespace
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Allow web to backend communication policy
+# Addresses requirement: Pod Communication (2.1 High-Level Architecture Overview)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-web
+  namespace: mint-replica-backend
+  annotations:
+    kubernetes.io/description: "Allow ingress traffic from web namespace to backend services"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/compliance: "pci-dss,hipaa,gdpr"
+spec:
+  podSelector:
+    matchLabels:
+      app: mint-replica-lite
+      component: backend
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: mint-replica-web
+    ports:
+    - protocol: TCP
+      port: 8080
+
+---
+# Allow monitoring access policy
+# Addresses requirement: Security Controls (6.3 Security Protocols/6.3.3 Security Controls)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring
+  namespace: mint-replica-monitoring
+  annotations:
+    kubernetes.io/description: "Allow monitoring services to scrape metrics from application pods"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/compliance: "pci-dss,hipaa,gdpr"
+spec:
+  podSelector:
+    matchLabels:
+      app: mint-replica-lite
+      component: monitoring
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: mint-replica-monitoring
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          app: mint-replica-lite
+    ports:
+    - protocol: TCP
+      port: 9090  # Prometheus metrics port
+    - protocol: TCP
+      port: 8080  # Application metrics port
+
+---
+# Allow DNS resolution policy
+# Addresses requirement: Network Security (6. Security Considerations/6.2 Data Security)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: kube-system
+  annotations:
+    kubernetes.io/description: "Allow DNS resolution for all application pods"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/compliance: "pci-dss,hipaa,gdpr"
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: kube-dns
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          app: mint-replica-lite
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

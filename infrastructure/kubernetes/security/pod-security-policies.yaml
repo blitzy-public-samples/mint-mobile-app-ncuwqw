@@ -1,0 +1,147 @@
+# Human Tasks:
+# 1. Verify Kubernetes API server has PodSecurityPolicy admission controller enabled
+# 2. Ensure environment variable ${ENV} is properly configured in deployment pipeline
+# 3. Review and validate seccomp/AppArmor profiles are available on all nodes
+# 4. Configure audit logging for PSP violations
+# 5. Verify PSP is bound to appropriate service accounts via RBAC
+
+# Kubernetes version: v1.24+
+
+---
+# Pod Security Policy Definition
+# Addresses requirements:
+# - Security Controls (6.3.3): Implements pod-level security controls and restrictions
+# - Platform-Specific Security (6.3.4): Enforces container security policies
+# - Infrastructure Security (2.5.4): Ensures secure pod deployment
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: mint-replica-restricted
+  labels:
+    app: mint-replica-lite
+    component: security
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Restricted policy for production workloads"
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: "runtime/default"
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: "runtime/default"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: "runtime/default"
+    apparmor.security.beta.kubernetes.io/defaultProfileName: "runtime/default"
+spec:
+  # Prevent privileged containers
+  privileged: false
+  allowPrivilegeEscalation: false
+  
+  # Drop all capabilities by default
+  requiredDropCapabilities:
+    - "ALL"
+  allowedCapabilities: []
+  
+  # Restrict volume types
+  volumes:
+    - "configMap"
+    - "emptyDir"
+    - "projected"
+    - "secret"
+    - "downwardAPI"
+    - "persistentVolumeClaim"
+  
+  # Prevent host namespace sharing
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  
+  # Enforce non-root user
+  runAsUser:
+    rule: "MustRunAsNonRoot"
+    ranges:
+      - min: 1000
+        max: 65535
+  
+  # SELinux context settings
+  seLinux:
+    rule: "RunAsAny"
+  
+  # Supplemental groups settings
+  supplementalGroups:
+    rule: "MustRunAs"
+    ranges:
+      - min: 1
+        max: 65535
+  
+  # FSGroup settings
+  fsGroup:
+    rule: "MustRunAs"
+    ranges:
+      - min: 1
+        max: 65535
+  
+  # Enforce read-only root filesystem
+  readOnlyRootFilesystem: true
+  
+  # Prevent host path mounts
+  allowedHostPaths: []
+
+---
+# RBAC binding for PSP
+# Binds PSP to backend role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: psp-backend-binding
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: security
+    environment: ${ENV}
+spec:
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: backend-role
+  subjects:
+  - kind: ServiceAccount
+    name: backend-service
+    namespace: mint-replica-backend
+
+---
+# RBAC binding for PSP
+# Binds PSP to web role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: psp-web-binding
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: security
+    environment: ${ENV}
+spec:
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: web-role
+  subjects:
+  - kind: ServiceAccount
+    name: web-service
+    namespace: mint-replica-web
+
+---
+# PSP Usage ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: psp-restricted-role
+  labels:
+    app: mint-replica-lite
+    component: security
+    environment: ${ENV}
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs: ['use']
+  resourceNames:
+  - mint-replica-restricted

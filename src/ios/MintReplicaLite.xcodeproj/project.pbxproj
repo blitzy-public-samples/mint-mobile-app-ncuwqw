@@ -1,0 +1,251 @@
+// !$*UTF8*$!
+{
+    archiveVersion = 1;
+    classes = {
+    };
+    objectVersion = 54;
+    objects = {
+
+/* Begin PBXBuildFile section */
+        /* HUMAN TASKS:
+         1. Replace TEAM_ID with your Apple Developer Team ID
+         2. Configure Firebase by adding GoogleService-Info.plist
+         3. Set up code signing identities and provisioning profiles
+         4. Configure push notification certificates in Apple Developer Portal
+         5. Enable required capabilities in Xcode project settings
+         */
+
+        /* Main Application Source Files */
+        1A2B3C4D5E6F7G8H /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7G8I /* AppDelegate.swift */; };
+        2B3C4D5E6F7G8H9I /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3C4D5E6F7G8H9J /* SceneDelegate.swift */; };
+
+        /* Storyboards and Resources */
+        3C4D5E6F7G8H9I0J /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3C4D5E6F7G8H9I0K /* Main.storyboard */; };
+        4D5E6F7G8H9I0J1K /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D5E6F7G8H9I0J1L /* LaunchScreen.storyboard */; };
+        5E6F7G8H9I0J1K2L /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5E6F7G8H9I0J1K2M /* Assets.xcassets */; };
+
+        /* CocoaPods Dependencies */
+        6F7G8H9I0J1K2L3M /* Pods_MintReplicaLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7G8H9I0J1K2L3N /* Pods_MintReplicaLite.framework */; };
+        7G8H9I0J1K2L3M4N /* Pods_MintReplicaLiteTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7G8H9I0J1K2L3M4O /* Pods_MintReplicaLiteTests.framework */; };
+        8H9I0J1K2L3M4N5O /* Pods_MintReplicaLiteUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8H9I0J1K2L3M4N5P /* Pods_MintReplicaLiteUITests.framework */; };
+
+        /* Test Files */
+        9I0J1K2L3M4N5O6P /* MintReplicaLiteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9I0J1K2L3M4N5O6Q /* MintReplicaLiteTests.swift */; };
+        0J1K2L3M4N5O6P7Q /* MintReplicaLiteUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0J1K2L3M4N5O6P7R /* MintReplicaLiteUITests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+        1K2L3M4N5O6P7Q8R /* PBXContainerItemProxy */ = {
+            isa = PBXContainerItemProxy;
+            containerPortal = 1K2L3M4N5O6P7Q8S /* Project object */;
+            proxyType = 1;
+            remoteGlobalIDString = 1K2L3M4N5O6P7Q8T;
+            remoteInfo = MintReplicaLite;
+        };
+        2L3M4N5O6P7Q8R9S /* PBXContainerItemProxy */ = {
+            isa = PBXContainerItemProxy;
+            containerPortal = 1K2L3M4N5O6P7Q8S /* Project object */;
+            proxyType = 1;
+            remoteGlobalIDString = 1K2L3M4N5O6P7Q8T;
+            remoteInfo = MintReplicaLite;
+        };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+        /* Main Application References */
+        1A2B3C4D5E6F7G8I /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+        2B3C4D5E6F7G8H9J /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+        3C4D5E6F7G8H9I0K /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+        4D5E6F7G8H9I0J1L /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+        5E6F7G8H9I0J1K2M /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+        6F7G8H9I0J1K2L3N /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+
+        /* Framework References */
+        7G8H9I0J1K2L3M4O /* Pods_MintReplicaLite.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MintReplicaLite.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+        8H9I0J1K2L3M4N5P /* Pods_MintReplicaLiteTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MintReplicaLiteTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+        9I0J1K2L3M4N5O6Q /* Pods_MintReplicaLiteUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MintReplicaLiteUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+
+        /* Test References */
+        0J1K2L3M4N5O6P7R /* MintReplicaLiteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MintReplicaLiteTests.swift; sourceTree = "<group>"; };
+        1K2L3M4N5O6P7Q8U /* MintReplicaLiteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MintReplicaLiteUITests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+        2M3N4O5P6Q7R8S9T /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                6F7G8H9I0J1K2L3M /* Pods_MintReplicaLite.framework in Frameworks */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        3N4O5P6Q7R8S9T0U /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                7G8H9I0J1K2L3M4N /* Pods_MintReplicaLiteTests.framework in Frameworks */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+        4O5P6Q7R8S9T0U1V /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                8H9I0J1K2L3M4N5O /* Pods_MintReplicaLiteUITests.framework in Frameworks */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+        5P6Q7R8S9T0U1V2W /* MintReplicaLite */ = {
+            isa = PBXGroup;
+            children = (
+                1A2B3C4D5E6F7G8I /* AppDelegate.swift */,
+                2B3C4D5E6F7G8H9J /* SceneDelegate.swift */,
+                3C4D5E6F7G8H9I0K /* Main.storyboard */,
+                4D5E6F7G8H9I0J1L /* LaunchScreen.storyboard */,
+                5E6F7G8H9I0J1K2M /* Assets.xcassets */,
+                6F7G8H9I0J1K2L3N /* Info.plist */,
+            );
+            path = MintReplicaLite;
+            sourceTree = "<group>";
+        };
+        6Q7R8S9T0U1V2W3X /* MintReplicaLiteTests */ = {
+            isa = PBXGroup;
+            children = (
+                0J1K2L3M4N5O6P7R /* MintReplicaLiteTests.swift */,
+            );
+            path = MintReplicaLiteTests;
+            sourceTree = "<group>";
+        };
+        7R8S9T0U1V2W3X4Y /* MintReplicaLiteUITests */ = {
+            isa = PBXGroup;
+            children = (
+                1K2L3M4N5O6P7Q8U /* MintReplicaLiteUITests.swift */,
+            );
+            path = MintReplicaLiteUITests;
+            sourceTree = "<group>";
+        };
+        8S9T0U1V2W3X4Y5Z /* Frameworks */ = {
+            isa = PBXGroup;
+            children = (
+                7G8H9I0J1K2L3M4O /* Pods_MintReplicaLite.framework */,
+                8H9I0J1K2L3M4N5P /* Pods_MintReplicaLiteTests.framework */,
+                9I0J1K2L3M4N5O6Q /* Pods_MintReplicaLiteUITests.framework */,
+            );
+            name = Frameworks;
+            sourceTree = "<group>";
+        };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+        9T0U1V2W3X4Y5Z6A /* MintReplicaLite */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = 0U1V2W3X4Y5Z6A7B /* Build configuration list for PBXNativeTarget "MintReplicaLite" */;
+            buildPhases = (
+                1V2W3X4Y5Z6A7B8C /* [CP] Check Pods Manifest.lock */,
+                2W3X4Y5Z6A7B8C9D /* Sources */,
+                3X4Y5Z6A7B8C9D0E /* Frameworks */,
+                4Y5Z6A7B8C9D0E1F /* Resources */,
+                5Z6A7B8C9D0E1F2G /* [CP] Embed Pods Frameworks */,
+                6A7B8C9D0E1F2G3H /* SwiftLint */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+            );
+            name = MintReplicaLite;
+            productName = MintReplicaLite;
+            productReference = 7B8C9D0E1F2G3H4I /* MintReplicaLite.app */;
+            productType = "com.apple.product-type.application";
+        };
+/* End PBXNativeTarget section */
+
+/* Begin XCBuildConfiguration section */
+        8C9D0E1F2G3H4I5J /* Debug */ = {
+            isa = XCBuildConfiguration;
+            baseConfigurationReference = 9D0E1F2G3H4I5J6K /* Pods-MintReplicaLite.debug.xcconfig */;
+            buildSettings = {
+                SWIFT_VERSION = "5.0";
+                IPHONEOS_DEPLOYMENT_TARGET = "14.0";
+                TARGETED_DEVICE_FAMILY = "1,2";
+                DEVELOPMENT_TEAM = "TEAM_ID";
+                CODE_SIGN_STYLE = "Automatic";
+                ENABLE_BITCODE = "NO";
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+                SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG";
+                ENABLE_TESTABILITY = "YES";
+                ONLY_ACTIVE_ARCH = "YES";
+                CLANG_ENABLE_MODULES = "YES";
+                CLANG_ENABLE_OBJC_ARC = "YES";
+                COPY_PHASE_STRIP = "NO";
+                PRODUCT_BUNDLE_IDENTIFIER = "com.mintreplicalite.app";
+                INFOPLIST_FILE = "MintReplicaLite/Info.plist";
+                ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon";
+                LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+            };
+            name = Debug;
+        };
+        9D0E1F2G3H4I5J6K /* Release */ = {
+            isa = XCBuildConfiguration;
+            baseConfigurationReference = 0E1F2G3H4I5J6K7L /* Pods-MintReplicaLite.release.xcconfig */;
+            buildSettings = {
+                SWIFT_VERSION = "5.0";
+                IPHONEOS_DEPLOYMENT_TARGET = "14.0";
+                TARGETED_DEVICE_FAMILY = "1,2";
+                DEVELOPMENT_TEAM = "TEAM_ID";
+                CODE_SIGN_STYLE = "Automatic";
+                ENABLE_BITCODE = "NO";
+                SWIFT_OPTIMIZATION_LEVEL = "-O";
+                SWIFT_COMPILATION_MODE = "wholemodule";
+                ENABLE_NS_ASSERTIONS = "NO";
+                VALIDATE_PRODUCT = "YES";
+                COPY_PHASE_STRIP = "YES";
+                DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+                PRODUCT_BUNDLE_IDENTIFIER = "com.mintreplicalite.app";
+                INFOPLIST_FILE = "MintReplicaLite/Info.plist";
+                ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon";
+                LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+            };
+            name = Release;
+        };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+        0F1G2H3I4J5K6L7M /* Build configuration list for PBXProject "MintReplicaLite" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                8C9D0E1F2G3H4I5J /* Debug */,
+                9D0E1F2G3H4I5J6K /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+/* End XCConfigurationList section */
+
+/* Begin PBXShellScriptBuildPhase section */
+        6A7B8C9D0E1F2G3H /* SwiftLint */ = {
+            isa = PBXShellScriptBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            inputFileListPaths = (
+            );
+            inputPaths = (
+            );
+            name = SwiftLint;
+            outputFileListPaths = (
+            );
+            outputPaths = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+            shellPath = /bin/sh;
+            shellScript = "\"${PODS_ROOT}/SwiftLint/swiftlint\"";
+        };
+/* End PBXShellScriptBuildPhase section */
+
+    };
+    rootObject = 1K2L3M4N5O6P7Q8S /* Project object */;
+}

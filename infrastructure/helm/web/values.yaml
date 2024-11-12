@@ -1,0 +1,139 @@
+# Human Tasks:
+# 1. Verify container registry credentials are configured in the cluster
+# 2. Ensure SSL certificates are properly configured in cert-manager
+# 3. Validate DNS records match the ingress host configuration
+# 4. Review resource quotas align with autoscaling configuration
+# 5. Confirm monitoring endpoints are implemented in the application
+
+# Dependencies versions:
+# - nginx-ingress: 4.7.1
+# - cert-manager: 1.12.0
+
+# Addresses requirement: Infrastructure as Code (2.5.2 Deployment Architecture)
+# Global values shared across templates
+global:
+  environment: staging  # staging/production
+  region: us-west-2    # AWS deployment region
+
+# Addresses requirement: Web Application Deployment (2.1 High-Level Architecture Overview/Client Layer)
+# Container image configuration
+image:
+  repository: 012345678901.dkr.ecr.us-west-2.amazonaws.com/mint-replica-web
+  tag: latest
+  pullPolicy: Always
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Default replica count for high availability
+replicaCount: 2
+
+# Container resource allocation
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Ingress configuration for web access
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+  hosts:
+    - host: app.mintreplica.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: mint-replica-web-tls
+      hosts:
+        - app.mintreplica.com
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+# Security context configuration
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    path: /metrics
+    interval: 30s
+    labels:
+      release: prometheus
+
+# Health check probe configuration
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /ready
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 2
+
+# Pod topology spread configuration for high availability
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  topologyKey: topology.kubernetes.io/zone
+  whenUnsatisfiable: ScheduleAnyway
+
+# Pod disruption budget for availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Node affinity configuration
+nodeAffinity:
+  enabled: true
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+      - matchExpressions:
+          - key: kubernetes.io/arch
+            operator: In
+            values:
+              - amd64
+          - key: kubernetes.io/os
+            operator: In
+            values:
+              - linux
+
+# Update strategy configuration
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0

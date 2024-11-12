@@ -1,0 +1,97 @@
+# Human Tasks:
+# 1. Verify AWS credentials are configured for S3 access
+# 2. Ensure S3 bucket 'mint-replica-logs' exists in us-west-2 region
+# 3. Validate network policies allow Loki pod communication
+# 4. Check storage class exists for WAL and index storage
+# 5. Verify Kubernetes service account has necessary permissions
+
+# Grafana Loki version: 2.9.1
+# Kubernetes version: v1.24+
+
+# Addresses requirement: Logging Infrastructure (2.5.1 Production Environment)
+# Enables centralized logging with Loki integration
+auth_enabled: true
+
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+# Configures server endpoints for log collection and querying
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  http_server_read_timeout: 30s
+  http_server_write_timeout: 30s
+  grpc_server_max_recv_msg_size: 104857600
+
+# Addresses requirement: Distributed Logging (2.5.3 Scalability Architecture)
+# Configures ingester for distributed log processing
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: memberlist
+      replication_factor: 2
+  chunk_idle_period: 30m
+  chunk_retain_period: 30s
+  max_transfer_retries: 0
+  wal:
+    enabled: true
+    dir: /data/loki/wal
+
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+# Defines schema configuration for log storage
+schema_config:
+  configs:
+    - from: "2023-01-01"
+      store: boltdb-shipper
+      object_store: s3
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+# Addresses requirement: Distributed Logging (2.5.3 Scalability Architecture)
+# Configures storage backend for log persistence
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /data/loki/index
+    cache_location: /data/loki/boltdb-cache
+    shared_store: s3
+  aws:
+    s3: s3://mint-replica-logs
+    region: us-west-2
+
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+# Sets resource limits and retention policies
+limits_config:
+  retention_period: 168h
+  enforce_metric_name: false
+  max_entries_limit_per_query: 5000
+  max_query_series: 500
+  max_query_lookback: 720h
+  ingestion_rate_mb: 10
+  ingestion_burst_size_mb: 20
+
+# Addresses requirement: Logging Infrastructure (2.5.1 Production Environment)
+# Configures chunk store for efficient log storage
+chunk_store_config:
+  max_look_back_period: 720h
+  chunk_cache_config:
+    enable_fifocache: true
+    fifocache:
+      max_size_bytes: 1073741824
+      validity: 24h
+
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+# Manages log retention and cleanup
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 168h
+
+# Addresses requirement: Distributed Logging (2.5.3 Scalability Architecture)
+# Configures log compaction for storage optimization
+compactor:
+  working_directory: /data/loki/compactor
+  shared_store: s3
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150

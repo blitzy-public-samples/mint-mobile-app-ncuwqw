@@ -1,0 +1,54 @@
+# Human Tasks:
+# 1. Ensure all team groups (@repo-admins, @backend-team, etc.) are properly configured in GitHub organization settings
+# 2. Verify that all team members have appropriate access levels in the repository
+# 3. Review and adjust code ownership rules based on team structure and expertise
+# 4. Set up branch protection rules to enforce code review requirements
+# 5. Configure GitHub notifications for team mentions
+
+# Requirement: Security Infrastructure
+# Enforces secure development practices through mandatory code reviews by designated owners
+# Default ownership - repository administrators have oversight of all files
+* @repo-admins
+
+# Requirement: Role-Based Access Control
+# Implements role-based access control for code review and approval processes
+
+# Backend services including API, authentication, and data services
+/src/backend/** @backend-team @security-team
+
+# Native iOS application using Swift/UIKit
+/src/ios/** @ios-team
+
+# React Native web and Android application
+/src/web/** @web-team @react-native-team
+
+# Infrastructure configuration including Kubernetes, AWS, and deployment scripts
+/infrastructure/** @devops-team @security-team
+
+# Requirement: Code Review Process
+# Ensures all code changes are reviewed by appropriate team members based on their expertise
+
+# Security-related code requires security team review
+**/security.py @security-team
+**/auth.py @security-team
+**/encryption.py @security-team
+**/keys.py @security-team
+**/certificates/** @security-team
+
+# CI/CD pipeline configuration
+/.github/workflows/* @devops-team
+
+# Database changes require both backend and database team review
+**/migrations/** @backend-team @database-team
+**/schemas/** @backend-team @database-team
+
+# API documentation requires backend team and technical writer review
+/docs/api/** @backend-team @technical-writers
+**/swagger/** @backend-team @technical-writers
+**/openapi/** @backend-team @technical-writers
+
+# Test files require QA team review
+**/tests/** @qa-team
+**/__tests__/** @qa-team
+**/*.test.* @qa-team
+**/*.spec.* @qa-team

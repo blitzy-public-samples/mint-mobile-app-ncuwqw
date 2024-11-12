@@ -1,0 +1,83 @@
+{
+  "expo": {
+    // Requirement: Cross-Platform Development - Configure React Native Web application settings
+    "name": "Mint Replica Lite",
+    "slug": "mint-replica-lite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icons/app-icon.png",
+    "userInterfaceStyle": "automatic",
+    
+    // Requirement: Platform-Specific Configuration - Define splash screen settings
+    "splash": {
+      "image": "./src/assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    
+    // Requirement: Platform-Specific Configuration - Configure OTA updates
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/your-project-id"
+    },
+    
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    
+    // Requirement: Platform-Specific Configuration & Security Requirements - iOS specific settings
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mintreplicalite.app",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "This app uses Face ID to securely authenticate users",
+        "NSCameraUsageDescription": "This app uses the camera for document scanning",
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
+      }
+    },
+    
+    // Requirement: Platform-Specific Configuration & Security Requirements - Android specific settings
+    "android": {
+      "package": "com.mintreplicalite.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/icons/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "USE_BIOMETRIC",
+        "CAMERA",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    
+    // Requirement: Platform-Specific Configuration - Web platform settings
+    "web": {
+      "favicon": "./src/assets/icons/favicon.png"
+    },
+    
+    // Requirement: Security Requirements - Configure secure plugins
+    "plugins": [
+      "expo-secure-store",
+      "expo-local-authentication",
+      "expo-notifications"
+    ],
+    
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    
+    "owner": "mint-replica-lite",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ]
+  }
+}

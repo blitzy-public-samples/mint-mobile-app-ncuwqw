@@ -1,0 +1,91 @@
+# Human Tasks:
+# 1. Ensure Kubernetes service account 'prometheus' is created with appropriate RBAC permissions
+# 2. Verify that the service account token and CA certificate are mounted correctly
+# 3. Confirm alertmanager service is deployed and accessible at alertmanager:9093
+# 4. Set file permissions to 0644
+# 5. Set file ownership to prometheus:prometheus
+
+# Prometheus v2.45.0 Configuration
+# Implements monitoring requirements from sections 2.5.1, 2.5.3, and 2.5.4 of technical specification
+
+# Global configuration
+# REQ: Metrics Collection - Sets default scraping intervals for all targets
+global:
+  scrape_interval: 15s     # How frequently to scrape targets
+  evaluation_interval: 15s  # How frequently to evaluate rules
+  scrape_timeout: 10s      # Timeout for scrape requests
+
+# Alertmanager configuration
+# REQ: Health Monitoring - Configures alert routing and notification
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files to load
+# REQ: Infrastructure Monitoring - Defines recording and alerting rules
+rule_files:
+  - "rules/recording_rules.yml"
+  - "rules/alerting_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Kubernetes API server monitoring
+  # REQ: Infrastructure Monitoring - Monitors Kubernetes control plane
+  - job_name: 'kubernetes-apiservers'
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+            - default
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+
+  # Kubernetes nodes monitoring
+  # REQ: Health Monitoring - Monitors node-level metrics
+  - job_name: 'kubernetes-nodes'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+
+  # Kubernetes pods monitoring
+  # REQ: Metrics Collection - Collects metrics from annotated pods
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+
+  # Mint Replica backend service monitoring
+  # REQ: Health Monitoring - Application-specific metrics collection
+  - job_name: 'mint-replica-backend'
+    kubernetes_sd_configs:
+      - role: service
+        namespaces:
+          names:
+            - mint-replica
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_label_app]
+        regex: mint-replica-backend
+        action: keep
+
+  # Redis monitoring
+  # REQ: Infrastructure Monitoring - Database metrics collection
+  - job_name: 'redis-metrics'
+    static_configs:
+      - targets:
+        - redis-exporter:9121
+
+  # PostgreSQL monitoring
+  # REQ: Infrastructure Monitoring - Database metrics collection
+  - job_name: 'postgres-metrics'
+    static_configs:
+      - targets:
+        - postgres-exporter:9187

@@ -1,0 +1,153 @@
+# Human Tasks:
+# 1. Review and validate RBAC permissions align with security requirements
+# 2. Configure audit logging for RBAC operations in Kubernetes API server
+# 3. Verify service account token rotation settings
+# 4. Ensure environment variable ${ENV} is properly configured in deployment pipeline
+# 5. Review cluster-wide permissions granted to monitoring role
+
+# Kubernetes version: v1.24+
+
+---
+# Backend Role Definition
+# Addresses requirements:
+# - Authorization Matrix (6.1.2): Implements role-based access control for backend services
+# - Security Controls (6.3.3): Defines granular access controls for backend components
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backend-role
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Backend service role with minimal required permissions"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+
+---
+# Web Role Definition
+# Addresses requirements:
+# - Authorization Matrix (6.1.2): Implements role-based access control for web services
+# - Infrastructure Security (2.5.2): Establishes secure service access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: web-role
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Web service role with read-only configmap access"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+
+---
+# Monitoring Cluster Role Definition
+# Addresses requirements:
+# - Security Controls (6.3.3): Defines cluster-wide monitoring permissions
+# - Infrastructure Security (2.5.2): Enables secure monitoring capabilities
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: monitoring-role
+  labels:
+    app: mint-replica-lite
+    component: monitoring
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Cluster-wide monitoring role for metrics collection"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+
+---
+# Backend Role Binding
+# Addresses requirements:
+# - Authorization Matrix (6.1.2): Links backend service account to role
+# - Security Controls (6.3.3): Implements principle of least privilege
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backend-role-binding
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Binds backend role to backend service account"
+subjects:
+  - kind: ServiceAccount
+    name: backend-service
+    namespace: mint-replica-backend
+roleRef:
+  kind: Role
+  name: backend-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Web Role Binding
+# Addresses requirements:
+# - Authorization Matrix (6.1.2): Links web service account to role
+# - Infrastructure Security (2.5.2): Establishes secure service bindings
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: web-role-binding
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Binds web role to web service account"
+subjects:
+  - kind: ServiceAccount
+    name: web-service
+    namespace: mint-replica-web
+roleRef:
+  kind: Role
+  name: web-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Monitoring Cluster Role Binding
+# Addresses requirements:
+# - Security Controls (6.3.3): Links monitoring service account to cluster role
+# - Infrastructure Security (2.5.2): Enables cluster-wide monitoring access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: monitoring-role-binding
+  labels:
+    app: mint-replica-lite
+    component: monitoring
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Binds monitoring role to monitoring service account"
+subjects:
+  - kind: ServiceAccount
+    name: monitoring-service
+    namespace: mint-replica-monitoring
+roleRef:
+  kind: ClusterRole
+  name: monitoring-role
+  apiGroup: rbac.authorization.k8s.io

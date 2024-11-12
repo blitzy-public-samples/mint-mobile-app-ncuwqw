@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme
+   LastUpgradeVersion = "1400"
+   version = "1.7">
+   <!-- HUMAN TASKS:
+   1. Verify test bundle identifiers match your project configuration
+   2. Configure custom test host applications if needed
+   3. Set up code signing for test targets
+   4. Configure any additional test-specific environment variables
+   5. Set up custom test plans if required -->
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES">
+      <!-- Requirement: iOS Native Implementation - Build configuration for native iOS app -->
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1K2L3M4N5O6P7Q8T"
+               BuildableName = "MintReplicaLite.app"
+               BlueprintName = "MintReplicaLite"
+               ReferencedContainer = "container:MintReplicaLite.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      codeCoverageEnabled = "YES">
+      <!-- Requirement: Development Environment - Test configuration setup -->
+      <TestPlans>
+         <TestPlanReference
+            reference = "container:MintReplicaLite.xctestplan"
+            default = "YES">
+         </TestPlanReference>
+      </TestPlans>
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES"
+            testExecutionOrdering = "random">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2L3M4N5O6P7Q8R9S"
+               BuildableName = "MintReplicaLiteTests.xctest"
+               BlueprintName = "MintReplicaLiteTests"
+               ReferencedContainer = "container:MintReplicaLite.xcodeproj">
+            </BuildableReference>
+            <SkippedTests>
+            </SkippedTests>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3M4N5O6P7Q8R9S0T"
+               BuildableName = "MintReplicaLiteUITests.xctest"
+               BlueprintName = "MintReplicaLiteUITests"
+               ReferencedContainer = "container:MintReplicaLite.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
+   </TestAction>
+   <LaunchAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES">
+      <!-- Requirement: iOS Native Implementation - Launch configuration -->
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "1K2L3M4N5O6P7Q8T"
+            BuildableName = "MintReplicaLite.app"
+            BlueprintName = "MintReplicaLite"
+            ReferencedContainer = "container:MintReplicaLite.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "OS_ACTIVITY_MODE"
+            value = "disable"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "TESTING_MODE"
+            value = "0"
+            isEnabled = "NO">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
+      <BackgroundModes>
+         <Mode>fetch</Mode>
+         <Mode>remote-notification</Mode>
+      </BackgroundModes>
+   </LaunchAction>
+   <ProfileAction
+      buildConfiguration = "Release"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <!-- Requirement: Development Environment - Profiling configuration -->
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "1K2L3M4N5O6P7Q8T"
+            BuildableName = "MintReplicaLite.app"
+            BlueprintName = "MintReplicaLite"
+            ReferencedContainer = "container:MintReplicaLite.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+   </ProfileAction>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES"
+      customArchiveName = "MintReplicaLite">
+   </ArchiveAction>
+</Scheme>

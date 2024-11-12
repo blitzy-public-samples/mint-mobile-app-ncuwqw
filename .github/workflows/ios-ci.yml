@@ -1,0 +1,165 @@
+# GitHub Actions workflow for iOS continuous integration
+# Addresses requirements:
+# - iOS Native Implementation (1.1 System Overview/Client Applications)
+# - Security Infrastructure (1.1 System Overview/Security Infrastructure)
+# - Code Quality Standards (5. SYSTEM DESIGN/A.2 Code Quality Standards)
+
+name: iOS CI
+
+# Define workflow triggers
+on:
+  push:
+    branches: [ main, develop ]
+    paths: [ 'src/ios/**' ]
+  pull_request:
+    branches: [ main, develop ]
+    paths: [ 'src/ios/**' ]
+
+# Define permissions
+permissions:
+  contents: read
+  issues: write
+  checks: write
+  pull-requests: write
+
+# Concurrency control to prevent redundant builds
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Default working directory for all jobs
+defaults:
+  run:
+    working-directory: src/ios
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-latest
+
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_14.0.app/Contents/Developer
+      WORKSPACE: MintReplicaLite.xcworkspace
+      SCHEME: MintReplicaLite
+      DESTINATION: platform=iOS Simulator,name=iPhone 14,OS=latest
+
+    steps:
+      # Checkout repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Setup Ruby environment for CocoaPods
+      - name: Setup Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+
+      # Cache CocoaPods dependencies
+      - name: Cache CocoaPods
+        uses: actions/cache@v3
+        with:
+          path: Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      # Install CocoaPods dependencies
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods -v 1.12.0
+          pod install
+
+      # Run SwiftLint
+      - name: Run SwiftLint
+        run: |
+          if [ -f Pods/SwiftLint/swiftlint ]; then
+            Pods/SwiftLint/swiftlint --strict --reporter github-actions-logging
+          else
+            echo "SwiftLint not found in Pods, installing..."
+            brew install swiftlint
+            swiftlint --strict --reporter github-actions-logging
+          fi
+
+      # Build for testing
+      - name: Build for Testing
+        run: |
+          xcodebuild clean build-for-testing \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -destination "$DESTINATION" \
+            -configuration Debug \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Run unit tests
+      - name: Run Unit Tests
+        run: |
+          xcodebuild test-without-building \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -destination "$DESTINATION" \
+            -configuration Debug \
+            -enableCodeCoverage YES \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Generate code coverage report
+      - name: Generate Code Coverage Report
+        run: |
+          xcrun xccov view --report \
+            build/Logs/Test/*.xcresult > coverage_report.txt
+
+      # Upload test results
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            build/Logs/Test/*.xcresult
+            coverage_report.txt
+
+      # Archive app if on main branch
+      - name: Archive App
+        if: github.ref == 'refs/heads/main'
+        run: |
+          xcodebuild archive \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath build/MintReplicaLite.xcarchive \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Generate dSYM files
+      - name: Generate dSYM
+        if: github.ref == 'refs/heads/main'
+        run: |
+          dsymutil build/MintReplicaLite.xcarchive/Products/Applications/MintReplicaLite.app/MintReplicaLite \
+            -o build/MintReplicaLite.app.dSYM
+
+      # Upload build artifacts
+      - name: Upload Build Artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            build/MintReplicaLite.xcarchive
+            build/MintReplicaLite.app.dSYM
+
+      # Validate app binary
+      - name: Validate App Binary
+        if: github.ref == 'refs/heads/main'
+        run: |
+          xcrun stapler validate build/MintReplicaLite.xcarchive/Products/Applications/MintReplicaLite.app
+
+      # Post test results comment on PR
+      - name: Post Test Results
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All tests passed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Coverage report available in artifacts" >> $GITHUB_STEP_SUMMARY

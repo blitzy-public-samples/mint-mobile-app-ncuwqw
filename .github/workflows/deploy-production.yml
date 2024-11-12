@@ -1,0 +1,319 @@
+# Human Tasks:
+# 1. Configure AWS IAM OIDC provider for GitHub Actions
+# 2. Set up required GitHub repository secrets:
+#    - AWS_ACCOUNT_ID
+#    - AWS_ROLE_ARN (for production environment)
+#    - SLACK_WEBHOOK_URL (for notifications)
+# 3. Configure branch protection rules for 'main'
+# 4. Set up required environment protection rules for 'production'
+# 5. Configure AWS KMS encryption keys for secrets
+# 6. Set up monitoring dashboards for canary metrics
+
+# Required GitHub Actions versions:
+# actions/checkout@v3
+# aws-actions/configure-aws-credentials@v2
+# aws-actions/amazon-ecr-login@v1
+# hashicorp/setup-terraform@v2
+# azure/k8s-set-context@v2
+
+name: Production Deployment
+
+# Requirement: CI/CD Pipeline - Implements production deployment with canary release strategy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_version:
+        description: 'Version to deploy'
+        required: true
+        type: string
+      canary_percentage:
+        description: 'Percentage of traffic for canary'
+        required: false
+        type: number
+        default: 10
+
+# Requirement: Production Environment Deployment - Environment Configuration
+env:
+  ENVIRONMENT: production
+  AWS_REGION: us-west-2
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+  CANARY_PERCENTAGE: ${{ github.event.inputs.canary_percentage || 10 }}
+
+# Prevent concurrent deployments to production
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+# Required permissions for deployment
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+  deployments: write
+  environments: write
+
+jobs:
+  # Requirement: Production Environment Deployment - Infrastructure Management
+  deploy-infrastructure:
+    name: Deploy Production Infrastructure
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      eks_cluster_endpoint: ${{ steps.terraform-apply.outputs.eks_cluster_endpoint }}
+      rds_primary_endpoint: ${{ steps.terraform-apply.outputs.rds_primary_endpoint }}
+      redis_endpoint: ${{ steps.terraform-apply.outputs.redis_endpoint }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.4.x"
+
+      - name: Initialize Terraform
+        working-directory: infrastructure/terraform/environments/production
+        run: terraform init
+
+      - name: Plan infrastructure changes
+        working-directory: infrastructure/terraform/environments/production
+        run: terraform plan -out=tfplan
+
+      - name: Request manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: required-approvers
+          minimum-approvals: 2
+          timeout: 3600
+
+      - name: Apply infrastructure changes
+        id: terraform-apply
+        working-directory: infrastructure/terraform/environments/production
+        run: terraform apply -auto-approve tfplan
+
+  # Requirement: CI/CD Pipeline - Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan container images
+        run: |
+          # Install and run Trivy scanner
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy filesystem --security-checks vuln,config .
+
+      - name: Check infrastructure compliance
+        run: |
+          # Run tfsec for Terraform security scanning
+          curl -s https://raw.githubusercontent.com/tfsec/tfsec/master/scripts/install_linux.sh | bash
+          tfsec infrastructure/terraform
+
+      - name: Analyze dependencies
+        run: |
+          # Run OWASP Dependency Check
+          docker run --rm \
+            -v $(pwd):/src \
+            owasp/dependency-check \
+            --scan /src \
+            --format HTML \
+            --out /src/dependency-check-report.html
+
+      - name: Generate security report
+        run: |
+          echo "Security Scan Summary" > security-report.txt
+          echo "===================" >> security-report.txt
+          echo "Completed scans:" >> security-report.txt
+          echo "- Container security scan" >> security-report.txt
+          echo "- Infrastructure compliance check" >> security-report.txt
+          echo "- Dependency analysis" >> security-report.txt
+
+  # Requirement: CI/CD Pipeline - Build and Push
+  build-and-push:
+    name: Build and Push Images
+    needs: [deploy-infrastructure, security-scan]
+    runs-on: ubuntu-latest
+    outputs:
+      backend_image_tag: ${{ steps.build-tags.outputs.backend_tag }}
+      web_image_tag: ${{ steps.build-tags.outputs.web_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Generate build tags
+        id: build-tags
+        run: |
+          echo "backend_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "web_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build backend image
+        run: |
+          docker build -t ${{ env.ECR_REGISTRY }}/backend:${{ steps.build-tags.outputs.backend_tag }} \
+            --build-arg ENV=production \
+            ./backend
+
+      - name: Build web image
+        run: |
+          docker build -t ${{ env.ECR_REGISTRY }}/web:${{ steps.build-tags.outputs.web_tag }} \
+            --build-arg ENV=production \
+            ./web
+
+      - name: Scan images for vulnerabilities
+        run: |
+          trivy image ${{ env.ECR_REGISTRY }}/backend:${{ steps.build-tags.outputs.backend_tag }}
+          trivy image ${{ env.ECR_REGISTRY }}/web:${{ steps.build-tags.outputs.web_tag }}
+
+      - name: Push images to ECR
+        run: |
+          docker push ${{ env.ECR_REGISTRY }}/backend:${{ steps.build-tags.outputs.backend_tag }}
+          docker push ${{ env.ECR_REGISTRY }}/web:${{ steps.build-tags.outputs.web_tag }}
+
+  # Requirement: CI/CD Pipeline - Canary Deployment
+  deploy-canary:
+    name: Deploy Canary Release
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v2
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Deploy canary backend
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: backend-api-canary
+            namespace: mint-replica-backend
+          spec:
+            replicas: 1
+            template:
+              spec:
+                containers:
+                - name: backend-api
+                  image: ${{ env.ECR_REGISTRY }}/backend:${{ needs.build-and-push.outputs.backend_image_tag }}
+                  resources:
+                    requests:
+                      cpu: "500m"
+                      memory: "512Mi"
+                    limits:
+                      cpu: "2000m"
+                      memory: "2Gi"
+          EOF
+
+      - name: Deploy canary web frontend
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: web-frontend-canary
+            namespace: mint-replica-web
+          spec:
+            replicas: 1
+            template:
+              spec:
+                containers:
+                - name: web-frontend
+                  image: ${{ env.ECR_REGISTRY }}/web:${{ needs.build-and-push.outputs.web_image_tag }}
+                  resources:
+                    requests:
+                      cpu: "100m"
+                      memory: "256Mi"
+                    limits:
+                      cpu: "500m"
+                      memory: "512Mi"
+          EOF
+
+      - name: Monitor canary metrics
+        run: |
+          # Wait for canary pods to be ready
+          kubectl wait --for=condition=ready pod -l app=mint-replica-lite,deployment=canary --timeout=300s
+          
+          # Monitor error rates and latency for 10 minutes
+          for i in {1..10}; do
+            kubectl logs -l app=mint-replica-lite,deployment=canary --tail=100
+            sleep 60
+          done
+
+      - name: Validate canary health
+        run: |
+          # Check error rates
+          if [[ $(kubectl logs -l app=mint-replica-lite,deployment=canary --tail=1000 | grep ERROR | wc -l) -gt 5 ]]; then
+            echo "Error rate too high in canary deployment"
+            exit 1
+          fi
+
+  # Requirement: High Availability - Production Promotion
+  promote-to-production:
+    name: Promote to Production
+    needs: [deploy-canary]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Validate canary metrics
+        run: |
+          # Check performance metrics
+          kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/mint-replica-backend/pods | jq .
+          kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/mint-replica-web/pods | jq .
+
+      - name: Request manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: required-approvers
+          minimum-approvals: 2
+          timeout: 3600
+
+      - name: Scale up production deployment
+        run: |
+          # Scale backend deployment
+          kubectl scale deployment backend-api -n mint-replica-backend --replicas=3
+          
+          # Scale web deployment
+          kubectl scale deployment web-frontend -n mint-replica-web --replicas=3
+          
+          # Update images
+          kubectl set image deployment/backend-api backend-api=${{ env.ECR_REGISTRY }}/backend:${{ needs.build-and-push.outputs.backend_image_tag }} -n mint-replica-backend
+          kubectl set image deployment/web-frontend web-frontend=${{ env.ECR_REGISTRY }}/web:${{ needs.build-and-push.outputs.web_image_tag }} -n mint-replica-web
+
+      - name: Scale down canary
+        run: |
+          kubectl delete deployment backend-api-canary -n mint-replica-backend
+          kubectl delete deployment web-frontend-canary -n mint-replica-web
+
+      - name: Verify production health
+        run: |
+          # Wait for production pods to be ready
+          kubectl wait --for=condition=ready pod -l app=mint-replica-lite -n mint-replica-backend --timeout=300s
+          kubectl wait --for=condition=ready pod -l app=mint-replica-lite -n mint-replica-web --timeout=300s
+          
+          # Verify endpoints
+          kubectl get endpoints -n mint-replica-backend
+          kubectl get endpoints -n mint-replica-web

@@ -1,0 +1,122 @@
+# Human Tasks:
+# 1. Ensure Docker image registry is properly configured and accessible
+# 2. Verify ${ENV} variable is set in Terraform for environment-specific deployments
+# 3. Configure cluster autoscaler to handle the defined resource requests
+# 4. Set up Prometheus for metrics collection on port 9090
+# 5. Implement network policies to allow metrics scraping
+# 6. Review security context and pod security policies
+
+# Kubernetes version: v1.24+
+# Docker image: mint-replica-backend:latest
+
+---
+# Backend API Deployment
+# Addresses requirements:
+# - Container Orchestration (2.5.2 Deployment Architecture/Containerization)
+# - High Availability (2.5.4 Availability Architecture)
+# - Resource Management (7.4 Orchestration/Kubernetes Configuration)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-api
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Backend API deployment for Mint Replica Lite"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+spec:
+  # High Availability: Maintain minimum 2 replicas for redundancy
+  replicas: 2
+  
+  # Pod selector for deployment targeting
+  selector:
+    matchLabels:
+      app: mint-replica-lite
+      component: backend
+  
+  # Deployment strategy for zero-downtime updates
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  # Pod template specification
+  template:
+    metadata:
+      labels:
+        app: mint-replica-lite
+        component: backend
+    spec:
+      containers:
+      - name: backend-api
+        image: mint-replica-backend:latest
+        # Container ports for API and metrics
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        - containerPort: 9090
+          protocol: TCP
+          name: metrics
+        
+        # Load configuration from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        
+        # Resource requirements and limits
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+        
+        # Health monitoring
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 30
+      
+      # Security context for the pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 60

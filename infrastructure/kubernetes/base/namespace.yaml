@@ -1,0 +1,263 @@
+# Human Tasks:
+# 1. Ensure Terraform is configured to handle ${ENV} variable substitution
+# 2. Configure RBAC policies for each namespace after creation
+# 3. Set up network policies in the cluster
+# 4. Verify resource quotas align with cluster capacity
+# 5. Enable monitoring tools to track namespace resource usage
+
+# Kubernetes version: v1.24+
+
+---
+# Backend namespace definition
+# Addresses requirement: Component Isolation (2.1 High-Level Architecture Overview)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Backend services namespace for Mint Replica Lite"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/enforce-networkpolicy: "true"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+    kubernetes.io/retention-policy: "30d"
+
+---
+# Resource quota for backend namespace
+# Addresses requirement: Resource Management (7. Infrastructure/7.2 Cloud Services)
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mint-replica-backend-quota
+  namespace: mint-replica-backend
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: "8Gi"
+    limits.cpu: "4"
+    limits.memory: "8Gi"
+    pods: "20"
+    configmaps: "50"
+    secrets: "50"
+    persistentvolumeclaims: "10"
+    services: "20"
+    replicationcontrollers: "20"
+
+---
+# LimitRange for backend namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mint-replica-backend-limits
+  namespace: mint-replica-backend
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "500m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu: "200m"
+      memory: "256Mi"
+    max:
+      cpu: "2"
+      memory: "4Gi"
+    min:
+      cpu: "100m"
+      memory: "128Mi"
+
+---
+# Web application namespace definition
+# Addresses requirement: Multi-Environment Support (7. Infrastructure/7.1 Deployment Environment)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Web application namespace for Mint Replica Lite"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/enforce-networkpolicy: "true"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+    kubernetes.io/retention-policy: "30d"
+
+---
+# Resource quota for web namespace
+# Addresses requirement: Resource Management (7. Infrastructure/7.2 Cloud Services)
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mint-replica-web-quota
+  namespace: mint-replica-web
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: "4Gi"
+    limits.cpu: "2"
+    limits.memory: "4Gi"
+    pods: "10"
+    configmaps: "25"
+    secrets: "25"
+    persistentvolumeclaims: "5"
+    services: "10"
+    replicationcontrollers: "10"
+
+---
+# LimitRange for web namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mint-replica-web-limits
+  namespace: mint-replica-web
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "250m"
+      memory: "256Mi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "128Mi"
+    max:
+      cpu: "1"
+      memory: "2Gi"
+    min:
+      cpu: "50m"
+      memory: "64Mi"
+
+---
+# Monitoring namespace definition
+# Addresses requirement: Security Boundaries (6. Security Considerations/6.1 Authentication and Authorization)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mint-replica-monitoring
+  labels:
+    app: mint-replica-lite
+    component: monitoring
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Monitoring systems namespace for Mint Replica Lite"
+    kubernetes.io/security-level: "restricted"
+    kubernetes.io/enforce-networkpolicy: "true"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+    kubernetes.io/retention-policy: "30d"
+
+---
+# Resource quota for monitoring namespace
+# Addresses requirement: Resource Management (7. Infrastructure/7.2 Cloud Services)
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: mint-replica-monitoring-quota
+  namespace: mint-replica-monitoring
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: "4Gi"
+    limits.cpu: "2"
+    limits.memory: "4Gi"
+    pods: "10"
+    configmaps: "25"
+    secrets: "25"
+    persistentvolumeclaims: "5"
+    services: "10"
+    replicationcontrollers: "10"
+
+---
+# LimitRange for monitoring namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mint-replica-monitoring-limits
+  namespace: mint-replica-monitoring
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "250m"
+      memory: "256Mi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "128Mi"
+    max:
+      cpu: "1"
+      memory: "2Gi"
+    min:
+      cpu: "50m"
+      memory: "64Mi"
+
+---
+# Network Policy for monitoring access
+# Addresses requirement: Security Boundaries (6. Security Considerations/6.1 Authentication and Authorization)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-access
+  namespace: mint-replica-backend
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          component: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+
+---
+# Network Policy for web to backend access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web-to-backend
+  namespace: mint-replica-backend
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          component: web
+    ports:
+    - protocol: TCP
+      port: 8080
+
+---
+# Default deny network policy for all namespaces
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: mint-replica-backend
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress

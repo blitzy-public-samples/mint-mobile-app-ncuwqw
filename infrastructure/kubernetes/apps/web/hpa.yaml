@@ -1,0 +1,78 @@
+# Human Tasks:
+# 1. Verify that Prometheus metrics adapter is installed for HPA metrics collection
+# 2. Ensure resource limits in deployment match HPA target utilization thresholds
+# 3. Monitor initial scaling behavior and adjust thresholds if needed
+# 4. Set up alerts for scaling events and resource saturation
+# 5. Validate that cluster has sufficient capacity for max replicas
+
+# Kubernetes version: v1.24+
+
+---
+# Horizontal Pod Autoscaler Configuration for Web Frontend
+# Addresses requirements:
+# - Auto-scaling (2.5.3 Scalability Architecture/Horizontal scaling)
+# - High Availability (2.5.4 Availability Architecture)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-frontend-hpa
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "HPA configuration for web frontend application"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+
+spec:
+  # Reference to the web frontend deployment for scaling
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-frontend
+
+  # Scaling limits based on high availability requirements
+  minReplicas: 2  # Ensures minimum HA configuration
+  maxReplicas: 10 # Maximum scale based on namespace quota limits
+
+  # Resource utilization metrics for scaling decisions
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # Target set to 70% of the 500m CPU limit defined in deployment
+          averageUtilization: 70
+
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          # Target set to 80% of the 512Mi memory limit defined in deployment
+          averageUtilization: 80
+
+  # Scaling behavior configuration for stability
+  behavior:
+    # Scale up behavior
+    scaleUp:
+      # Quick response to increased load
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2           # Add up to 2 pods at a time
+          periodSeconds: 60  # Every 60 seconds
+
+    # Scale down behavior
+    scaleDown:
+      # Conservative scale down to prevent thrashing
+      stabilizationWindowSeconds: 300  # 5-minute window
+      policies:
+        - type: Pods
+          value: 1            # Remove 1 pod at a time
+          periodSeconds: 120  # Every 2 minutes

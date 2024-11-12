@@ -1,0 +1,102 @@
+# HUMAN TASKS:
+# 1. Verify Node.js v18.x is compatible with all project dependencies
+# 2. Ensure repository secrets are configured for any sensitive data
+# 3. Configure branch protection rules for main and develop branches
+# 4. Set up artifact retention policies in repository settings
+
+# REQ: Continuous Integration (2.5.2 Deployment Architecture/CI/CD)
+# GitHub Actions workflow for web application CI pipeline
+name: Web CI
+
+# Trigger workflow on push and pull requests to main/develop branches
+# Only when changes are made in src/web directory
+on:
+  push:
+    branches: 
+      - main
+      - develop
+    paths:
+      - 'src/web/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/web/**'
+
+jobs:
+  # REQ: Code Quality Standards (APPENDICES/A.2 Code Quality Standards)
+  # REQ: Testing Strategy (7.5 CI/CD Pipeline/Pipeline Stages)
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: src/web/package-lock.json
+
+      # Cache node_modules
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: src/web/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('src/web/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Install dependencies
+      - name: Install Dependencies
+        working-directory: src/web
+        run: npm ci
+
+      # Type checking
+      - name: TypeScript Type Check
+        working-directory: src/web
+        run: npm run typecheck
+
+      # Lint check
+      - name: ESLint Code Quality Check
+        working-directory: src/web
+        run: npm run lint
+
+      # Run tests
+      - name: Run Tests
+        working-directory: src/web
+        run: npm run test
+        env:
+          CI: true
+
+      # Build application
+      - name: Build Production Bundle
+        working-directory: src/web
+        run: npm run build
+        env:
+          CI: true
+          NODE_ENV: production
+
+      # Upload build artifacts
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-build
+          path: src/web/dist
+          retention-days: 7
+          if-no-files-found: error
+
+      # Upload test coverage
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: src/web/coverage
+          retention-days: 7
+          if-no-files-found: error

@@ -1,0 +1,51 @@
+# Human Tasks:
+# 1. Verify Helm repositories are accessible in your environment
+# 2. Ensure Prometheus operator CRDs are installed for ServiceMonitor support
+# 3. Validate Redis cluster requirements in target environment
+# 4. Review ingress-nginx configuration for SSL termination
+
+# Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers)
+# Defines Helm chart metadata for deploying backend services on Kubernetes cluster
+apiVersion: v2
+name: mint-replica-backend
+description: A Helm chart for deploying Mint Replica Lite backend services with high availability and monitoring
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+
+# Addresses requirement: Infrastructure as Code (2.5.2 Deployment Architecture)
+# Defines chart metadata and maintainer information
+keywords:
+  - financial
+  - backend
+  - api
+  - mint-replica
+maintainers:
+  - name: DevOps Team
+    email: devops@mintreplicaapp.com
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures dependencies for HA components including Redis replication and ingress controller
+dependencies:
+  # nginx-ingress v4.7.1 - Load balancing and SSL termination
+  - name: ingress-nginx
+    version: 4.7.1
+    repository: https://kubernetes.github.io/ingress-nginx
+    condition: ingress.enabled
+
+  # Addresses requirement: Monitoring (2.5.5 Monitoring Architecture)
+  # Integrates Prometheus monitoring stack for metrics collection
+  - name: prometheus
+    version: 19.7.2
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.enabled
+
+  # Addresses requirement: High Availability (2.5.4 Availability Architecture)
+  # Configures Redis with replication for HA cache and session management
+  - name: redis
+    version: 17.11.3
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+
+# Specifies the template engine used for chart rendering
+engine: gotpl

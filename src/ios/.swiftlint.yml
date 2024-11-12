@@ -1,0 +1,113 @@
+# SwiftLint configuration file for Mint Replica Lite iOS app
+# Version: 0.50.0
+
+# Addresses requirement: Code Quality Standards (5. SYSTEM DESIGN/A.2 Code Quality Standards)
+# Enforces consistent code style and catches potential issues early in development
+
+# Disabled rules that are too restrictive for our use case
+disabled_rules:
+  - type_name
+  - identifier_name
+  - line_length
+  - file_length
+  - function_body_length
+  - cyclomatic_complexity
+
+# Opt-in rules for enhanced code quality
+# Addresses requirement: iOS Development Standards (4. Technology Stack/4.1 Programming Languages)
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - explicit_init
+  - closure_spacing
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - private_outlet
+  - nimble_operator
+  - attributes
+  - operator_usage_whitespace
+  - closure_end_indentation
+  - first_where
+  - sorted_imports
+  - prohibited_super_call
+  - fatal_error_message
+  - vertical_parameter_alignment_on_call
+  - let_var_whitespace
+  - unneeded_parentheses_in_closure_argument
+  - extension_access_modifier
+  - pattern_matching_keywords
+  - array_init
+  - literal_expression_end_indentation
+
+# Analyzer rules for deeper code analysis
+analyzer_rules:
+  - explicit_self
+  - unused_import
+  - unused_declaration
+  - unused_private_declaration
+
+# Included source files for linting
+included:
+  - src/ios/MintReplicaLite
+
+# Excluded paths from linting
+excluded:
+  - src/ios/Pods
+  - src/ios/MintReplicaLiteTests
+  - src/ios/MintReplicaLiteUITests
+
+# Line length configuration
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+  ignores_urls: true
+
+# Function body length limits
+function_body_length:
+  warning: 50
+  error: 100
+
+# Type body length limits
+type_body_length:
+  warning: 300
+  error: 500
+
+# File length limits
+file_length:
+  warning: 500
+  error: 1000
+  ignore_comment_only_lines: true
+
+# Cyclomatic complexity limits
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+# Type name configuration
+type_name:
+  min_length: 3
+  max_length: 50
+
+# Identifier name configuration
+identifier_name:
+  min_length: 2
+  max_length: 40
+  excluded:
+    - id
+    - x
+    - y
+    - dx
+    - dy
+
+# Nesting configuration
+nesting:
+  type_level: 2
+
+# Force cast/try configuration
+force_cast: warning
+force_try: warning
+force_unwrapping: warning
+
+# Reporter type
+reporter: "xcode"

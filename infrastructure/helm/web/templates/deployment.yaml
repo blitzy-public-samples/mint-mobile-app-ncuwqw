@@ -1,0 +1,162 @@
+# Human Tasks:
+# 1. Verify container registry credentials are properly configured
+# 2. Review resource quotas at namespace level
+# 3. Validate network policies allow required communication
+# 4. Ensure health check endpoints are implemented in the web application
+# 5. Review pod disruption budget configuration for HA
+# 6. Verify anti-affinity rules for multi-AZ deployment
+
+# Kubernetes version: v1.24+
+# Helm version: v3.0+
+
+---
+# Web Application Deployment
+# Addresses requirements:
+# - Web Application Deployment (2.1 High-Level Architecture Overview/Client Layer)
+# - Infrastructure as Code (2.5.2 Deployment Architecture/Helm)
+# - Security (2.4 Security Architecture)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mint-replica-web-{{ .Release.Name }}
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: {{ .Release.Namespace }}
+    release: {{ .Release.Name }}
+  annotations:
+    kubernetes.io/description: "Mint Replica Lite React Native Web deployment"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+spec:
+  # High Availability requirement (2.5.4)
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mint-replica-lite
+      component: web
+      release: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: mint-replica-lite
+        component: web
+        environment: {{ .Release.Namespace }}
+        release: {{ .Release.Name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Security requirement (2.4)
+      serviceAccountName: web-service
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+        - name: web
+          image: {{ .Release.Name }}/mint-replica-web:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          # Resource management for High Availability (2.5.4)
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          # Health monitoring for High Availability (2.5.4)
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          # Configuration from ConfigMap (2.5.2)
+          envFrom:
+            - configMapRef:
+                name: web-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      # High Availability requirement (2.5.4)
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mint-replica-lite
+                    - key: component
+                      operator: In
+                      values:
+                        - web
+                topologyKey: topology.kubernetes.io/zone
+      terminationGracePeriodSeconds: 60
+
+---
+# Horizontal Pod Autoscaler
+# Addresses requirements:
+# - High Availability (2.5.4 Availability Architecture)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mint-replica-web-{{ .Release.Name }}-hpa
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: {{ .Release.Namespace }}
+    release: {{ .Release.Name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mint-replica-web-{{ .Release.Name }}
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

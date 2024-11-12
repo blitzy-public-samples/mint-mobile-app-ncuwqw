@@ -1,0 +1,42 @@
+# Human Tasks:
+# 1. Verify ${ENV} variable is set in Terraform for environment-specific deployments
+# 2. Ensure cluster administrators are aware of PDB constraints during maintenance
+# 3. Monitor PDB status during cluster operations using kubectl get pdb
+# 4. Configure alerting for PDB violations in monitoring system
+
+# Kubernetes version: v1.24+
+
+---
+# Pod Disruption Budget for Backend API
+# Addresses requirements:
+# - High Availability (2.5.4 Availability Architecture)
+#   Ensures minimum number of backend pods remain available during voluntary disruptions
+# - Service Reliability (7.4 Orchestration/Kubernetes Configuration)
+#   Maintains service reliability during cluster maintenance operations
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend-api-pdb
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Pod Disruption Budget for Mint Replica Lite backend services"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+spec:
+  # Ensures at least 1 pod remains available during voluntary disruptions
+  # This works with deployment.yaml which maintains 2 replicas
+  minAvailable: 1
+  
+  # Selector matches exactly with deployment pod template labels
+  selector:
+    matchLabels:
+      app: mint-replica-lite
+      component: backend

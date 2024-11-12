@@ -1,0 +1,75 @@
+{{/*
+# Human Tasks:
+# 1. Verify AWS Load Balancer Controller is installed in the cluster
+# 2. Ensure cert-manager ClusterIssuer 'letsencrypt-prod' is configured
+# 3. Validate DNS records are properly configured in Route53
+# 4. Confirm SSL certificate request can be fulfilled by Let's Encrypt
+# 5. Verify VPC has proper public subnets tagged for ALB provisioning
+# 6. Check security groups allow traffic on ports 80 and 443
+*/}}
+
+{{/* Addresses requirement: External Access (2.1 High-Level Architecture Overview/Client Layer) */}}
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "web.fullname" . }}
+  labels:
+    {{- include "web.labels" . | nindent 4 }}
+  annotations:
+    # AWS Load Balancer Controller annotations
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    
+    {{/* Addresses requirement: TLS Security (2.4 Security Architecture/Transport Security) */}}
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn | default "" }}
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    
+    {{/* Addresses requirement: High Availability (2.5.4 Availability Architecture) */}}
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/success-codes: '200-399'
+    
+    # Cert Manager integration
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    
+    {{- if .Values.ingress.annotations }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: alb
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "web.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- range .Values.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+{{- end }}

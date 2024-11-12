@@ -1,0 +1,189 @@
+# Human Tasks:
+# 1. Verify AWS gp2 storage class is available in the cluster
+# 2. Ensure monitoring-service ServiceAccount exists in mint-replica-monitoring namespace
+# 3. Validate TLS certificates are properly configured for secure metrics
+# 4. Review backup storage permissions and retention policies
+# 5. Check network policy enforcement is enabled on the cluster
+
+# Prometheus Helm Chart Version: 15.10.0
+# Kubernetes Version: v1.24+
+
+# Addresses requirement: Infrastructure Monitoring (2.5.1 Production Environment)
+# Main Prometheus server configuration
+prometheus:
+  replicas: 2
+  retention: 15d
+  resources:
+    limits:
+      memory: 4Gi
+      cpu: 1000m
+    requests:
+      memory: 2Gi
+      cpu: 500m
+  
+  persistentVolume:
+    size: 50Gi
+    storageClass: gp2
+    
+  serviceAccount:
+    create: true
+    name: monitoring-service
+    
+  # Global scrape and evaluation intervals
+  global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+    
+  # Security configuration
+  # Addresses requirement: Health Monitoring (2.5.4 Availability Architecture)
+  securityContext:
+    runAsUser: 65534
+    runAsNonRoot: true
+    fsGroup: 65534
+  
+  rbac:
+    create: true
+    
+  networkPolicy:
+    enabled: true
+    
+  podSecurityPolicy:
+    enabled: true
+
+# Addresses requirement: Metrics Collection (2.5.3 Scalability Architecture)
+# Alert manager configuration
+alertmanager:
+  enabled: true
+  replicas: 2
+  retention: 120h
+  
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+      
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2
+
+# Node exporter configuration for host metrics
+nodeExporter:
+  enabled: true
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 200m
+    requests:
+      memory: 256Mi
+      cpu: 100m
+  hostNetwork: true
+  hostPID: true
+
+# Push gateway for batch job metrics
+pushgateway:
+  enabled: true
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 200m
+    requests:
+      memory: 256Mi
+      cpu: 100m
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: gp2
+
+# Service monitors configuration
+# Addresses requirement: Metrics Collection (2.5.3 Scalability Architecture)
+serviceMonitors:
+  - name: backend-services
+    selector:
+      matchLabels:
+        app: mint-replica-backend
+    endpoints:
+      - port: metrics
+        interval: 15s
+        path: /metrics
+        targetPort: 9090  # Matches METRICS_PORT from backend-config
+
+  - name: redis-metrics
+    selector:
+      matchLabels:
+        app: redis
+    endpoints:
+      - port: metrics
+        interval: 30s
+
+  - name: postgres-metrics
+    selector:
+      matchLabels:
+        app: postgresql
+    endpoints:
+      - port: metrics
+        interval: 30s
+
+# Storage configuration
+# Addresses requirement: Infrastructure Monitoring (2.5.1 Production Environment)
+storage:
+  tsdb:
+    retention:
+      time: 15d
+      size: 50Gi
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    storage:
+      storageClass: gp2
+
+# Security configuration
+# Addresses requirement: Health Monitoring (2.5.4 Availability Architecture)
+security:
+  tls:
+    enabled: true
+    certManager: true
+    
+  networkPolicies:
+    enabled: true
+    ingressSelector:
+      matchLabels:
+        app: mint-replica-lite
+        
+  rbac:
+    create: true
+    serviceAccountName: monitoring-service
+    
+  podSecurityPolicy:
+    enabled: true
+
+# Kubernetes service discovery configuration
+kubeStateMetrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    
+# Grafana configuration for visualization
+grafana:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2
+  
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 512Mi
+      cpu: 250m

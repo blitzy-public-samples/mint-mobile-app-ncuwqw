@@ -1,0 +1,80 @@
+# Human Tasks:
+# 1. Configure AWS Load Balancer Controller (v2.4+) in the cluster
+# 2. Create and configure SSL certificate in AWS Certificate Manager and provide ARN
+# 3. Create WAF ACL in AWS WAF and provide ACL ID
+# 4. Configure DNS records for API_DOMAIN and WEB_DOMAIN in Route 53
+# 5. Verify that backend-api-service and web-frontend services are running
+# 6. Ensure environment variables are set in deployment pipeline:
+#    - ENV (environment name)
+#    - SSL_CERT_ARN (ACM certificate ARN)
+#    - WAF_ACL_ID (WAF web ACL ID)
+#    - API_DOMAIN (API domain name)
+#    - WEB_DOMAIN (Web frontend domain name)
+
+# Kubernetes version: v1.24+
+# AWS Load Balancer Controller version: v2.4+
+
+---
+# Ingress resource for Mint Replica Lite application
+# Addresses requirements:
+# - Load Balancing (2.1 High-Level Architecture Overview/API Gateway Layer)
+# - TLS Security (6.2 Data Security/6.2.1 Encryption Implementation)
+# - Multi-Environment Support (7.1 Deployment Environment)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mint-replica-ingress
+  annotations:
+    # AWS Load Balancer Controller annotations
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    
+    # TLS and Security configuration
+    # Implements requirement: TLS Security
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: ${SSL_CERT_ARN}
+    alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS-1-2"
+    
+    # Health check configuration
+    alb.ingress.kubernetes.io/healthcheck-path: "/health"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    
+    # Load balancer grouping
+    alb.ingress.kubernetes.io/group.name: "mint-replica"
+    
+    # WAF integration for additional security
+    alb.ingress.kubernetes.io/waf-acl-id: ${WAF_ACL_ID}
+    
+    # Environment tracking
+    kubernetes.io/description: "Ingress configuration for Mint Replica Lite application"
+    kubernetes.io/environment: ${ENV}
+    kubernetes.io/managed-by: "terraform"
+
+spec:
+  rules:
+    # API backend routing
+    # Implements requirement: Load Balancing
+    - host: ${API_DOMAIN}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-api-service
+                port:
+                  number: 80
+    
+    # Web frontend routing
+    # Implements requirement: Multi-Environment Support
+    - host: ${WEB_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  number: 80

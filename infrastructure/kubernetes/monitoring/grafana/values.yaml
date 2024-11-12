@@ -1,0 +1,91 @@
+# Human Tasks:
+# 1. Create Kubernetes secret 'grafana-admin-password' with admin password
+# 2. Verify Prometheus server is accessible at prometheus-server:9090
+# 3. Verify Loki is accessible at loki:3100
+# 4. Configure ingress DNS and TLS certificates
+# 5. Set file permissions to 0644
+
+# REQ-2.5.1: Infrastructure Monitoring - Grafana deployment configuration
+deployment:
+  replicas: 1
+  image:
+    repository: grafana/grafana  # v9.3.2
+    tag: "9.3.2"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2
+
+# REQ-2.5.4: Health Monitoring - Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+
+# REQ-2.5.4: Health Monitoring - Ingress configuration
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+# REQ-2.5.1: Infrastructure Monitoring - Data source configuration
+datasources:
+  - name: Prometheus
+    type: prometheus
+    url: http://prometheus-server:9090
+    access: proxy
+    isDefault: true
+  - name: Loki
+    type: loki
+    url: http://loki:3100
+    access: proxy
+
+# REQ-2.5.1: Infrastructure Monitoring - Dashboard provider configuration
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+
+# REQ-2.5.3: Performance Metrics - Dashboard configuration
+dashboards:
+  kubernetes:
+    json: ${file:kubernetes_dashboard.dashboard_config}
+    datasource: Prometheus
+  postgres:
+    json: ${file:postgres_dashboard.dashboard_config}
+    datasource: Prometheus
+
+# REQ-2.5.4: Health Monitoring - Security configuration
+security:
+  adminPassword:
+    from_secret: grafana-admin-password
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+  rbac:
+    create: true
+    namespaced: true
+
+# REQ-2.5.1: Infrastructure Monitoring - Validation rules
+validation_rules:
+  - rule: prometheus_datasource
+    description: Prometheus server must be reachable at prometheus-server:9090
+  - rule: dashboard_compatibility 
+    description: Dashboard configurations must match Grafana version 9.3.2

@@ -1,0 +1,132 @@
+# Human Tasks:
+# 1. Verify that any custom local environment files follow the .env naming pattern
+# 2. Ensure any additional security credentials/certificates are named with .pem, .key, or .crt extensions
+# 3. Confirm team-specific IDE configurations are added to personal .gitignore_global
+
+# Backend Service Ignore Patterns
+# REQ: System Architecture - Build artifacts for backend services
+*.py[cod]
+__pycache__/
+*.so
+venv/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+
+# iOS App Ignore Patterns
+# REQ: System Architecture - Build artifacts for iOS client
+*.xcuserstate
+xcuserdata/
+*.xcworkspace
+Pods/
+*.ipa
+*.dSYM.zip
+
+# React Native Ignore Patterns
+# REQ: System Architecture - Build artifacts for mobile and web clients
+node_modules/
+npm-debug.log
+yarn-error.log
+build/
+dist/
+.expo/
+.bundle/
+android/app/build/
+android/.gradle/
+
+# IDE Configuration Files
+# REQ: Development Environment - IDE-specific files
+.idea/
+.vscode/
+*.swp
+
+# Operating System Files
+# REQ: Development Environment - OS-specific metadata
+.DS_Store
+Thumbs.db
+
+# Infrastructure Configuration
+# REQ: System Architecture - Infrastructure management artifacts
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+kubeconfig
+
+# Security and Credentials
+# REQ: Security Requirements - Sensitive data protection
+*.pem
+*.key
+*.crt
+secrets.yaml
+
+# Log Files
+# REQ: Development Environment - Debug and runtime logs
+*.log
+logs/
+
+# Test Artifacts
+# REQ: Development Environment - Test output and coverage
+coverage/
+.coverage
+htmlcov/
+
+# Docker Configuration
+# REQ: System Architecture - Container build artifacts
+.docker/
+*.env.docker
+
+# Database Files
+# REQ: Security Requirements - Local data stores
+*.sqlite
+*.db
+redis-data/
+
+# Temporary Files
+# REQ: Development Environment - Runtime artifacts
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Dependencies and Package Management
+# REQ: Development Environment - Package management
+package-lock.json
+yarn.lock
+Podfile.lock
+poetry.lock
+
+# Build Output
+# REQ: System Architecture - Compiled artifacts
+*.o
+*.out
+*.exe
+*.dll
+*.dylib
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Mobile Platform Specific
+# REQ: System Architecture - Mobile client artifacts
+ios/Pods/
+ios/build/
+android/build/
+android/captures/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/release/
+
+# Environment Configurations
+# REQ: Security Requirements - Environment-specific settings
+.env.*
+config.local.js
+local.settings.json
+appsettings.*.json

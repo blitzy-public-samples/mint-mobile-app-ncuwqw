@@ -1,0 +1,88 @@
+# Human Tasks:
+# 1. Verify container image is built and pushed to the repository
+# 2. Ensure proper IAM roles and service accounts are configured in EKS
+# 3. Validate Prometheus metrics endpoint configuration
+# 4. Review resource quotas and limits based on actual workload requirements
+# 5. Confirm network policies allow required pod-to-pod communication
+
+# Helm v3.0+ required
+# Kubernetes v1.24+ required
+
+{{/* Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers) */}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  {{/* Addresses requirement: High Availability (2.5.4 Availability Architecture) */}}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "backend.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{/* Addresses requirement: High Availability (2.5.4 Availability Architecture) - Monitoring Integration */}}
+        prometheus.io/scrape: "{{ .Values.monitoring.enabled }}"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{/* Addresses requirement: Security (2.4 Security Architecture) */}}
+      serviceAccountName: {{ include "backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{/* Addresses requirement: High Availability (2.5.4 Availability Architecture) */}}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{/* Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers) */}}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{/* Addresses requirement: Security (2.4 Security Architecture) */}}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          {{/* Addresses requirement: High Availability (2.5.4 Availability Architecture) - Health Checks */}}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{/* Addresses requirement: Scalability (2.5.3 Scalability Architecture) */}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          {{/* Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers) */}}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.configMapRef.name }}
+      {{/* Addresses requirement: Security (2.4 Security Architecture) */}}
+      terminationGracePeriodSeconds: 30

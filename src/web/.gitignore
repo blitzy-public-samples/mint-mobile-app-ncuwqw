@@ -1,0 +1,58 @@
+# HUMAN TASKS:
+# 1. Verify that all environment files (.env, .env.local, etc.) are properly created but not committed
+# 2. Ensure development team has securely shared the necessary certificates and keys outside version control
+# 3. Confirm iOS and Android signing configurations are properly backed up in a secure location
+
+# Addresses requirement: Development Environment (A.1 Development Environment Setup)
+# Dependencies and package management
+node_modules/
+.cache/
+.gradle/
+
+# Addresses requirement: Cross-platform Development (1.1 System Overview/Client Applications)
+# Build and distribution directories
+build/
+dist/
+web-build/
+.next/
+android/app/build/
+ios/build/
+
+# Addresses requirement: Security Infrastructure (1.1 System Overview/Security Infrastructure)
+# Environment and configuration files
+.env
+.env.local
+.env.*.local
+
+# Certificates and keys
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Addresses requirement: Development Environment (A.1 Development Environment Setup)
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Addresses requirement: Development Environment (A.1 Development Environment Setup)
+# Logs and debugging files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Addresses requirement: Development Environment (A.1 Development Environment Setup)
+# Test and coverage reports
+coverage/
+
+# Addresses requirement: Cross-platform Development (1.1 System Overview/Client Applications)
+# Platform-specific files
+.DS_Store
+
+# Addresses requirement: Development Environment (A.1 Development Environment Setup)
+# Version control and merge conflict artifacts
+*.orig.*

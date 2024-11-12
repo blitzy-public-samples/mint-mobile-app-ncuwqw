@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- HUMAN TASKS:
+     1. Verify Xcode workspace settings in Xcode preferences match the project requirements
+     2. Ensure DerivedData path is correctly configured in Xcode preferences
+     3. Confirm workspace indexing settings are enabled for optimal performance
+-->
+
+<!-- Implements requirement: iOS Native Implementation - Native iOS application built with Swift and UIKit/SwiftUI -->
+<!-- Implements requirement: Development Environment - Xcode 14+ development environment configuration -->
+<workspace
+   version = "1.0">
+   <FileRef
+      location = "group:MintReplicaLite.xcodeproj">
+   </FileRef>
+</workspace>

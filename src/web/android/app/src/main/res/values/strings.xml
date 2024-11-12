@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Requirements addressed:
+- Cross-platform Support (1.1): Android string resources for React Native app
+- User Interface (5.1): Localized text resources for Android platform
+-->
+<resources>
+    <!-- Application name used in AndroidManifest.xml and throughout the app -->
+    <string name="app_name">Mint Replica Lite</string>
+
+    <!-- Authentication screen strings -->
+    <string name="login_title">Welcome to Mint Replica Lite</string>
+    <string name="login_button">Sign In</string>
+    <string name="register_button">Create Account</string>
+
+    <!-- Biometric authentication strings -->
+    <string name="biometric_prompt_title">Authenticate</string>
+    <string name="biometric_prompt_subtitle">Confirm your identity</string>
+
+    <!-- Main navigation screen titles -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="accounts_title">Accounts</string>
+    <string name="transactions_title">Transactions</string>
+    <string name="budgets_title">Budgets</string>
+    <string name="goals_title">Goals</string>
+    <string name="investments_title">Investments</string>
+    <string name="settings_title">Settings</string>
+
+    <!-- Error messages -->
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_authentication">Authentication failed. Please try again.</string>
+    <string name="error_biometric">Biometric authentication failed. Please use password.</string>
+
+    <!-- Sync status messages -->
+    <string name="sync_in_progress">Syncing your accounts...</string>
+    <string name="sync_complete">All accounts up to date</string>
+</resources>

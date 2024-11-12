@@ -1,0 +1,62 @@
+# Human Tasks:
+# 1. Ensure Terraform is configured to handle ${ENV} variable substitution
+# 2. Verify Prometheus is configured to scrape metrics on port 9090
+# 3. Configure network policies to allow service discovery
+# 4. Review security compliance requirements (PCI-DSS, HIPAA, GDPR)
+# 5. Set up monitoring alerts for service health
+
+# Kubernetes version: v1.24+
+
+---
+# Backend API Service
+# Addresses requirements:
+# - Load Balancing (2.1 High-Level Architecture Overview/API Gateway Layer)
+# - Service Discovery (2.2 Component Architecture/Client Applications)
+# - High Availability (2.5.4 Availability Architecture)
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-api-service
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Backend API service for Mint Replica Lite"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+spec:
+  # Using ClusterIP for internal service discovery
+  # Supports requirement: Service Discovery
+  type: ClusterIP
+  
+  # Port configuration for API and metrics endpoints
+  ports:
+    # Main API endpoint
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+    
+    # Prometheus metrics endpoint
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+      name: metrics
+  
+  # Pod selector for service endpoints
+  # Matches deployment labels for backend API pods
+  selector:
+    app: mint-replica-lite
+    component: backend
+  
+  # Session affinity configuration
+  # No session affinity needed for stateless API
+  sessionAffinity: None

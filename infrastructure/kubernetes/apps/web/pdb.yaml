@@ -1,0 +1,42 @@
+# Human Tasks:
+# 1. Verify that the ${ENV} variable is properly set in Terraform
+# 2. Ensure cluster has policy/v1 API enabled (requires Kubernetes 1.21+)
+# 3. Validate that web-frontend deployment is running with 2 replicas
+# 4. Confirm cluster administrators are aware of PDB constraints during maintenance
+
+# Kubernetes version: v1.24+
+
+---
+# PodDisruptionBudget Configuration for Web Frontend
+# Addresses requirements:
+# - High Availability (2.5.4 Availability Architecture)
+#   Ensures minimum pod availability during voluntary disruptions
+# - Container Orchestration (2.5.2 Deployment Architecture/Containerization)
+#   Manages pod availability constraints during maintenance operations
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-frontend-pdb
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "PodDisruptionBudget configuration for web frontend application"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/pdb-controller: "kube-controller-manager"
+    kubernetes.io/disruption-allowed: "voluntary-only"
+
+spec:
+  # Ensures at least 1 pod is always available during voluntary disruptions
+  # This allows for maintenance operations while maintaining service availability
+  # Aligns with deployment's replica count of 2 to allow rolling updates
+  minAvailable: 1
+
+  # Pod selector matching the web-frontend deployment labels
+  selector:
+    matchLabels:
+      app: mint-replica-lite
+      component: web

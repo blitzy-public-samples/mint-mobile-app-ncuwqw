@@ -1,0 +1,102 @@
+# HUMAN TASKS:
+# 1. Ensure Xcode 14.0+ is installed
+# 2. Install CocoaPods 1.12.0+ using: sudo gem install cocoapods
+# 3. Run 'pod install' after any changes to this file
+# 4. Always open the .xcworkspace file instead of .xcodeproj
+# 5. Configure Firebase by adding GoogleService-Info.plist to the project
+# 6. Set up code signing and provisioning profiles in Xcode
+
+# Minimum iOS version requirement as per technical specification
+platform :ios, '14.0'
+
+# Enable framework linkage for all pods
+use_frameworks!
+
+# Suppress all warnings from dependencies
+inhibit_all_warnings!
+
+# Main application target
+target 'MintReplicaLite' do
+  # Networking and HTTP request handling
+  # @version 5.6.0
+  pod 'Alamofire', '~> 5.6.0'
+  
+  # Secure credential storage
+  # @version 4.2.0
+  pod 'KeychainAccess', '~> 4.2.0'
+  
+  # Code style enforcement
+  # @version 0.50.0
+  pod 'SwiftLint', '~> 0.50.0'
+  
+  # Financial data visualization
+  # @version 4.1.0
+  pod 'Charts', '~> 4.1.0'
+  
+  # WebSocket communication for real-time updates
+  # @version 4.0.0
+  pod 'Starscream', '~> 4.0.0'
+  
+  # Firebase services for analytics and messaging
+  # @version 10.0.0
+  pod 'Firebase/Analytics', '~> 10.0.0'
+  pod 'Firebase/Messaging', '~> 10.0.0'
+  
+  # Data encryption and security
+  # @version 1.7.0
+  pod 'CryptoSwift', '~> 1.7.0'
+  
+  # Efficient image loading and caching
+  # @version 5.15.0
+  pod 'SDWebImage', '~> 5.15.0'
+  
+  # Asynchronous programming support
+  # @version 6.18.0
+  pod 'PromiseKit', '~> 6.18.0'
+  
+  # Test targets configuration
+  target 'MintReplicaLiteTests' do
+    inherit! :search_paths
+    
+    # BDD testing framework
+    pod 'Quick'
+    pod 'Nimble'
+  end
+  
+  target 'MintReplicaLiteUITests' do
+    inherit! :search_paths
+  end
+end
+
+# Post-installation configuration hook
+post_install do |installer|
+  # Addresses requirement: iOS Native Implementation
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Ensure minimum iOS version compatibility
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      
+      # Enable recommended compiler flags
+      config.build_settings['SWIFT_VERSION'] = '5.0'
+      config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'YES'
+      config.build_settings['GCC_WARN_UNUSED_VARIABLE'] = 'YES'
+      
+      # Addresses requirement: Security Infrastructure
+      # Enable security-related build settings
+      config.build_settings['ENABLE_BITCODE'] = 'YES'
+      config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
+      config.build_settings['ENABLE_STRICT_OBJC_MSGSEND'] = 'YES'
+      config.build_settings['GCC_NO_COMMON_BLOCKS'] = 'YES'
+      
+      # Configure ARM64 architecture for iOS devices
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      
+      # Enable additional security checks
+      config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -D COCOAPODS -Xfrontend -warn-long-expression-type-checking=100'
+      
+      # Configure signing settings for frameworks
+      config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+    end
+  end
+end

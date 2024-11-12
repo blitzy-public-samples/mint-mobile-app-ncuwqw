@@ -1,0 +1,339 @@
+# Human Tasks:
+# 1. Verify Python 3.9+ is installed in development and production environments
+# 2. Ensure pip and poetry are installed and up to date
+# 3. Run 'poetry install' to install all dependencies with exact versions
+# 4. Configure virtual environments appropriately for development and production
+
+# Requirement: Backend Development Framework (4.1 Programming Languages)
+# Locks exact versions of Python 3.9+ and associated libraries
+[[package]]
+name = "flask"
+version = "2.0.0"
+description = "A simple framework for building complex web applications."
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-2.0.0-py3-none-any.whl", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+Werkzeug = ">=2.0"
+Jinja2 = ">=3.0"
+click = ">=7.1.2"
+
+# Requirement: Backend Framework Stack (4.2.2 Backend Development)
+# Locks exact versions of Flask extensions for REST API
+[[package]]
+name = "flask-restful"
+version = "0.3.9"
+description = "Simple framework for creating REST APIs"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-RESTful-0.3.9.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+flask = ">=2.0.0"
+aniso8601 = ">=0.82"
+pytz = "*"
+
+[[package]]
+name = "flask-sqlalchemy"
+version = "2.5.1"
+description = "Adds SQLAlchemy support to your Flask application."
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-SQLAlchemy-2.5.1.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+flask = ">=2.0.0"
+sqlalchemy = ">=1.4.0"
+
+[[package]]
+name = "flask-migrate"
+version = "3.1.0"
+description = "SQLAlchemy database migrations for Flask applications using Alembic."
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-Migrate-3.1.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+flask = ">=2.0.0"
+alembic = ">=1.4.1"
+
+[[package]]
+name = "flask-caching"
+version = "2.0.0"
+description = "Adds caching support to your Flask application"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-Caching-2.0.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+flask = ">=2.0.0"
+
+[[package]]
+name = "flask-jwt-extended"
+version = "4.4.0"
+description = "Extended JWT integration with Flask"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-JWT-Extended-4.4.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+flask = ">=2.0.0"
+pyjwt = ">=2.4.0"
+
+[[package]]
+name = "flask-cors"
+version = "3.0.10"
+description = "A Flask extension adding a decorator for CORS support"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "Flask-Cors-3.0.10.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+flask = ">=2.0.0"
+six = "*"
+
+# Requirement: Backend Framework Stack (4.2.2 Backend Development)
+# Database and caching dependencies
+[[package]]
+name = "psycopg2-binary"
+version = "2.9.3"
+description = "psycopg2 - Python-PostgreSQL Database Adapter"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "psycopg2-binary-2.9.3.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "redis"
+version = "4.2.0"
+description = "Python client for Redis database and key-value store"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "redis-4.2.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "celery"
+version = "5.2.3"
+description = "Distributed Task Queue"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "celery-5.2.3.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+billiard = ">=3.6.4.0"
+kombu = ">=5.2.3"
+pytz = ">0.0"
+
+[[package]]
+name = "gunicorn"
+version = "20.1.0"
+description = "WSGI HTTP Server for UNIX"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "gunicorn-20.1.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+setuptools = ">=3.0"
+
+# Requirement: Security Standards Compliance (6.3.1)
+# Security and integration dependencies
+[[package]]
+name = "boto3"
+version = "1.24.0"
+description = "The AWS SDK for Python"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "boto3-1.24.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+botocore = ">=1.27.0"
+s3transfer = ">=0.6.0"
+
+[[package]]
+name = "plaid-python"
+version = "9.1.0"
+description = "Python client library for the Plaid API"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "plaid-python-9.1.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+requests = ">=2.22.0"
+python-dateutil = ">=2.1"
+
+[[package]]
+name = "pydantic"
+version = "1.9.0"
+description = "Data validation using Python type hints"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "pydantic-1.9.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+typing-extensions = ">=3.7.4"
+
+[[package]]
+name = "cryptography"
+version = "37.0.0"
+description = "cryptography is a package which provides cryptographic recipes and primitives"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "cryptography-37.0.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+cffi = ">=1.12"
+
+# Requirement: Development Services (4.4.3)
+# Monitoring and development tool dependencies
+[[package]]
+name = "prometheus-client"
+version = "0.14.0"
+description = "Python client for the Prometheus monitoring system"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "prometheus_client-0.14.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "sentry-sdk"
+version = "1.9.0"
+description = "Python client for Sentry (https://sentry.io)"
+category = "main"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "sentry_sdk-1.9.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[package.dependencies]
+urllib3 = ">=1.10.0"
+
+# Development dependencies
+[[package]]
+name = "pytest"
+version = "7.1.0"
+description = "pytest: simple powerful testing with Python"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "pytest-7.1.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "pytest-cov"
+version = "3.0.0"
+description = "Pytest plugin for measuring coverage"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "pytest-cov-3.0.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "black"
+version = "22.1.0"
+description = "The uncompromising code formatter"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "black-22.1.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "isort"
+version = "5.10.1"
+description = "A Python utility / library to sort Python imports"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "isort-5.10.1.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "mypy"
+version = "0.931"
+description = "Optional static typing for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "mypy-0.931.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "flake8"
+version = "4.0.1"
+description = "the modular source code checker: pep8 pyflakes and co"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "flake8-4.0.1.tar.gz", hash = "sha256:hash_value"},
+]
+
+[[package]]
+name = "bandit"
+version = "1.7.0"
+description = "Security oriented static analyser for python code"
+category = "dev"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "bandit-1.7.0.tar.gz", hash = "sha256:hash_value"},
+]
+
+[metadata]
+lock-version = "1.1"
+python-versions = ">=3.9,<4.0"
+content-hash = "hash_value"

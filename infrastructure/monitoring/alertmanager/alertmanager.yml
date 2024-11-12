@@ -1,0 +1,96 @@
+# Human Tasks:
+# 1. Configure SMTP_PASSWORD in HashiCorp Vault for email notifications
+# 2. Configure PAGERDUTY_KEY in HashiCorp Vault for PagerDuty integration
+# 3. Set up Slack webhook URL and update slack_api_url
+# 4. Ensure file permissions are set to 0600
+# 5. Set file ownership to alertmanager:alertmanager
+
+# Alertmanager v0.25.0 Configuration
+# Implements monitoring requirements from sections 2.5.4 and 2.5.1 of technical specification
+
+global:
+  # Resolve timeout for alerts that are no longer firing
+  resolve_timeout: 5m
+  
+  # Slack integration for team notifications
+  # REQ: Infrastructure Monitoring - Slack channel integration for team alerts
+  slack_api_url: 'http://slack-webhook-url'
+  
+  # Email notification settings
+  # REQ: Health Monitoring - Multi-channel notifications including email
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@mintreplicaapp.com'
+  smtp_auth_username: 'alertmanager'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+
+# Root route for alert handling
+# REQ: Infrastructure Monitoring - Implements severity-based escalation
+route:
+  # Group alerts by name, cluster, and service for intelligent correlation
+  # REQ: Availability Monitoring - Intelligent grouping and deduplication
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # Wait 30s to group alerts before sending notification
+  group_wait: 30s
+  
+  # Wait 5m before sending a notification about new alerts that are added to a group
+  group_interval: 5m
+  
+  # Wait 4h before resending an alert that has already been sent
+  repeat_interval: 4h
+  
+  # Default receiver if no routes match
+  receiver: 'default-receiver'
+  
+  # Nested routes for severity-based routing
+  routes:
+    # Critical severity route
+    # REQ: Infrastructure Monitoring - Critical alert handling with rapid notification
+    - match:
+        severity: 'critical'
+      receiver: 'pager-duty-critical'
+      group_wait: '0s'  # Send critical alerts immediately
+      repeat_interval: '1h'  # Repeat critical alerts every hour
+    
+    # Warning severity route
+    # REQ: Infrastructure Monitoring - Warning alert handling with standard notification
+    - match:
+        severity: 'warning'
+      receiver: 'slack-warnings'
+      group_wait: '1m'
+      repeat_interval: '2h'
+
+# Inhibition rules to prevent alert spam
+# REQ: Availability Monitoring - Manages alerts with intelligent deduplication
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    # Apply inhibition if these labels match
+    equal: ['alertname', 'cluster', 'service']
+
+# Notification receivers configuration
+receivers:
+  # Default email receiver
+  # REQ: Health Monitoring - Email notification channel
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'team@mintreplicaapp.com'
+        send_resolved: true
+
+  # PagerDuty receiver for critical alerts
+  # REQ: Health Monitoring - PagerDuty integration for critical alerts
+  - name: 'pager-duty-critical'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_KEY}'
+        send_resolved: true
+
+  # Slack receiver for warning alerts
+  # REQ: Health Monitoring - Slack notification channel
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#alerts'
+        send_resolved: true
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ .CommonAnnotations.description }}'

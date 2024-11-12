@@ -1,0 +1,110 @@
+# Human Tasks:
+# 1. Verify environment variable values are properly set in Terraform
+# 2. Ensure secrets are stored in Kubernetes Secrets, not ConfigMaps
+# 3. Review PLAID_ENV setting matches the intended environment
+# 4. Validate S3_BUCKET permissions are correctly configured
+# 5. Confirm Redis and Database connection parameters
+# 6. Check API_BASE_URL is correctly set for environment
+
+# Kubernetes version: v1.24+
+
+---
+# Backend service configuration
+# Addresses requirements:
+# - Configuration Management (2.5.2 Deployment Architecture/Configuration Management)
+# - Application Configuration (2.1 High-Level Architecture Overview)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Application configuration for Mint Replica Lite components"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+    kubernetes.io/retention-policy: "30d"
+data:
+  # Application identification
+  APP_NAME: "Mint Replica Lite"
+  API_VERSION: "v1"
+  
+  # Logging and monitoring configuration
+  LOG_LEVEL: "INFO"  # Validated values: DEBUG, INFO, WARNING, ERROR
+  ENABLE_METRICS: "true"
+  METRICS_PORT: "9090"
+  
+  # API configuration
+  ALLOWED_ORIGINS: "*"
+  MAX_CONNECTIONS: "100"  # Range: 10-1000
+  
+  # Caching configuration
+  CACHE_TTL: "3600"  # Range: 60-86400 seconds
+  SYNC_INTERVAL: "300"  # Range: 60-3600 seconds
+  
+  # External service configuration
+  PLAID_ENV: "${PLAID_ENV}"  # Validated values: sandbox, development, production
+  S3_BUCKET: "${S3_BUCKET}"
+  
+  # Redis configuration
+  REDIS_HOST: "${REDIS_HOST}"
+  REDIS_PORT: "6379"
+  
+  # Database configuration
+  DB_HOST: "${DB_HOST}"
+  DB_PORT: "5432"
+  DB_NAME: "mint_replica"
+
+---
+# Web application configuration
+# Addresses requirements:
+# - Multi-Environment Support (7.1 Deployment Environment)
+# - Application Configuration (2.1 High-Level Architecture Overview)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+  annotations:
+    kubernetes.io/description: "Application configuration for Mint Replica Lite components"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+    kubernetes.io/security-compliance: "pci-dss,hipaa,gdpr"
+    kubernetes.io/backup-policy: "daily"
+    kubernetes.io/retention-policy: "30d"
+data:
+  # Application identification
+  APP_NAME: "Mint Replica Lite"
+  
+  # Runtime configuration
+  NODE_ENV: "${ENV}"  # Validated values: development, staging, production
+  WEB_PORT: "3000"
+  
+  # API configuration
+  API_BASE_URL: "${API_BASE_URL}"
+  
+  # Feature flags and capabilities
+  ENABLE_PWA: "true"
+  ANALYTICS_ENABLED: "true"
+  FEATURE_FLAGS: '{"INVESTMENTS":true,"GOALS":true}'
+  
+  # Error tracking
+  SENTRY_ENVIRONMENT: "${ENV}"
+  
+  # Caching configuration
+  CACHE_STRATEGY: "memory-first"  # Validated values: memory-first, network-first, cache-only
+  MAX_CACHE_SIZE: "50"
+  REFRESH_INTERVAL: "60"

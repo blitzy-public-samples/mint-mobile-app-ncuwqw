@@ -1,0 +1,33 @@
+# Human Tasks:
+# 1. Verify Kubernetes cluster meets minimum version requirements (v1.24+)
+# 2. Ensure Helm v3.0+ is installed
+# 3. Validate service port 80 is not in use by other services
+# 4. Confirm target port 3000 matches the container port configuration
+
+# Required versions:
+# - Kubernetes: v1.24+
+# - Helm: v3.0+
+
+{{/*
+Addresses requirements:
+- Web Application Deployment (2.1 High-Level Architecture Overview/Client Layer)
+- High Availability (2.5.4 Availability Architecture)
+- Infrastructure as Code (2.5.2 Deployment Architecture/Helm)
+*/}}
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "web.fullname" . }}
+  labels:
+    {{- include "web.labels" . | nindent 4 }}
+
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "web.selectorLabels" . | nindent 4 }}

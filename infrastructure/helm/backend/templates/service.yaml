@@ -1,0 +1,59 @@
+{{/*
+Human Tasks:
+1. Verify Helm v3.0+ is installed and configured in the environment
+2. Validate service port configuration matches the application's exposed port
+3. Review service annotations for cloud provider-specific load balancer settings
+4. Ensure proper network policies are in place for service access
+*/}}
+
+{{/* Required Helm Version: v3.0+ */}}
+{{/* Required Kubernetes Version: 1.24+ */}}
+
+{{/*
+Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers)
+Defines the Kubernetes Service resource for backend API access
+*/}}
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+{{/*
+Addresses requirements:
+- High Availability (2.5.4 Availability Architecture/Multi-AZ deployment)
+- Scalability (2.5.3 Scalability Architecture)
+Configures service type and port mappings for load balancing
+*/}}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+  
+  {{/*
+  Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers)
+  Sets up pod selector for service targeting using consistent labels
+  */}}
+  selector:
+    {{- include "backend.selectorLabels" . | nindent 4 }}
+
+  {{/* 
+  Addresses requirement: High Availability (2.5.4 Availability Architecture)
+  Ensures traffic is distributed across all healthy pods
+  */}}
+  sessionAffinity: None
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  externalTrafficPolicy: Local
+  {{- end }}

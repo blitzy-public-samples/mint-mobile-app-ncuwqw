@@ -1,0 +1,116 @@
+# HUMAN TASKS:
+# 1. Verify Docker and Docker Compose are installed (v2.0+)
+# 2. Configure AWS CloudWatch credentials for log shipping
+# 3. Set up Prometheus monitoring endpoint
+# 4. Review and adjust resource limits before production deployment
+# 5. Ensure required ports (8000, 5432, 6379) are available on host machine
+
+# REQ: Development Environment Setup - Defines containerized services for PostgreSQL database, Redis cache, and backend API services
+version: '3.8'
+
+services:
+  # REQ: Containerization - Implements Docker container configurations for API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - FLASK_APP=app.wsgi:app
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mint_replica
+      - REDIS_URL=redis://cache:6379/0
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - prometheus_data:/tmp/prometheus_multiproc
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # REQ: Data Storage Configuration - Configures PostgreSQL for primary data storage
+  db:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_DB=mint_replica
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # REQ: Data Storage Configuration - Redis for caching and session management
+  cache:
+    image: redis:6-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # REQ: Containerization - Implements Docker container configurations for Worker service
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A app.core.celery worker --loglevel=info
+    environment:
+      - FLASK_APP=app.wsgi:app
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mint_replica
+      - REDIS_URL=redis://cache:6379/0
+      - PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
+    volumes:
+      - ./:/app
+      - prometheus_data:/tmp/prometheus_multiproc
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  # REQ: Data Storage Configuration - Persistent storage for databases
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  # REQ: Development Environment Setup - Internal network for service communication
+  backend:
+    driver: bridge

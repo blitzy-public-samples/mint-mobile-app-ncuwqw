@@ -1,0 +1,180 @@
+# Human Tasks:
+# 1. Verify AWS gp2 storage class is available in the cluster
+# 2. Ensure monitoring namespace exists: mint-replica-monitoring
+# 3. Validate monitoring-service ServiceAccount exists
+# 4. Check cluster has sufficient resources for specified memory/CPU limits
+# 5. Verify backup storage location is configured for backups
+# 6. Test network connectivity between Loki components after deployment
+
+# Grafana Loki Helm Chart Version: 2.9.1
+# Kubernetes Version: v1.24+
+
+# Addresses requirements:
+# - Logging Infrastructure (2.5.1 Production Environment)
+# - System Observability (2.5.4 Availability Architecture)
+# - Distributed Logging (2.5.3 Scalability Architecture)
+
+global:
+  image:
+    # Using official Grafana Loki image
+    repository: grafana/loki
+    tag: 2.9.1
+    pullPolicy: IfNotPresent
+
+  # Common labels applied to all resources
+  labels:
+    app: mint-replica-lite
+    component: monitoring
+
+loki:
+  enabled: true
+  replicas: 2
+  
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClassName: gp2
+    
+  config:
+    auth_enabled: true
+    chunk_store_config:
+      max_look_back_period: 168h
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 168h
+    limits_config:
+      retention_period: 168h
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+distributor:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  config:
+    ingestion_rate_mb: 10
+    ingestion_burst_size_mb: 20
+
+ingester:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  config:
+    chunk_idle_period: 30m
+    chunk_target_size: 1.5MB
+    max_chunk_age: 168h
+
+querier:
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  config:
+    max_concurrent: 20
+    query_timeout: 1m
+    max_query_length: 721h
+
+# Storage configuration for persistence
+storage:
+  type: filesystem
+  filesystem:
+    chunks_directory: /data/loki/chunks
+    rules_directory: /data/loki/rules
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    destination: s3://mint-replica-backups/loki
+
+# Security configuration
+serviceAccount:
+  create: true
+  name: monitoring-service
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/mint-replica-monitoring"
+
+securityContext:
+  fsGroup: 10001
+  runAsUser: 10001
+  runAsNonRoot: true
+
+rbac:
+  create: true
+  pspEnabled: true
+
+networkPolicy:
+  enabled: true
+  ingressNSMatchLabels:
+    name: mint-replica-monitoring
+
+service:
+  type: ClusterIP
+  port: 3100
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3100"
+  labels:
+    app: mint-replica-lite
+    component: monitoring
+
+# Monitoring namespace
+nameOverride: ""
+fullnameOverride: ""
+namespace: mint-replica-monitoring
+
+# Pod anti-affinity for high availability
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - mint-replica-lite
+      topologyKey: kubernetes.io/hostname
+
+# Tolerations for node scheduling
+tolerations: []
+
+# Pod disruption budget for availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 30
+  timeoutSeconds: 1
+
+# Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 300

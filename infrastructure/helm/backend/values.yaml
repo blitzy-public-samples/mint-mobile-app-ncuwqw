@@ -1,0 +1,167 @@
+# Human Tasks:
+# 1. Verify Redis password is securely stored in a Kubernetes secret
+# 2. Ensure TLS certificates are properly configured for the domain
+# 3. Validate Prometheus operator is installed for ServiceMonitor CRD
+# 4. Confirm proper IAM roles are configured for EKS service accounts
+# 5. Review resource limits based on initial production metrics
+
+# Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers)
+# Defines base deployment configuration
+nameOverride: ""
+fullnameOverride: ""
+
+# Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers)
+# Defines container image configuration
+image:
+  repository: mint-replica-backend
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Addresses requirement: Security (2.4 Security Architecture)
+# Configures service account for pod identity
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures pod annotations for service discovery
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+
+# Addresses requirement: Security (2.4 Security Architecture)
+# Defines pod security context
+podSecurityContext:
+  fsGroup: 2000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Addresses requirement: Security (2.4 Security Architecture)
+# Defines container security context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures service properties
+service:
+  type: ClusterIP
+  port: 8000
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+  labels:
+    app: mint-replica-lite
+    component: backend
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures ingress settings
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.mintreplicaapp.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-tls
+      hosts:
+        - api.mintreplicaapp.com
+
+# Addresses requirement: Scalability (2.5.3 Scalability Architecture)
+# Defines resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Addresses requirement: Scalability (2.5.3 Scalability Architecture)
+# Configures horizontal pod autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures node selection and pod affinity
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - mint-replica-backend
+          topologyKey: kubernetes.io/hostname
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures monitoring settings
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: "15s"
+    labels:
+      release: prometheus
+
+# Addresses requirement: High Availability (2.5.4 Availability Architecture)
+# Configures Redis dependency
+redis:
+  enabled: true
+  architecture: replication
+  auth:
+    enabled: true
+    sentinel: true
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 8Gi
+
+# Addresses requirement: Container Orchestration (2.5.1 Production Environment/Application Servers)
+# References backend configuration
+configMapRef:
+  name: backend-config

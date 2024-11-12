@@ -1,0 +1,79 @@
+# Human Tasks:
+# 1. Verify cluster metrics server is installed and functioning
+# 2. Ensure Prometheus adapter is configured if using custom metrics
+# 3. Configure alerts for scaling events in monitoring system
+# 4. Validate ${ENV} variable is set in Terraform for environment-specific deployments
+# 5. Review and adjust scaling thresholds based on initial production metrics
+
+# Kubernetes version: v1.24+
+
+---
+# Horizontal Pod Autoscaler configuration for backend API
+# Addresses requirements:
+# - Auto-scaling (2.5.3 Scalability Architecture/Horizontal scaling)
+# - Resource Management (7.4 Orchestration/Kubernetes Configuration)
+# - High Availability (2.5.4 Availability Architecture)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-api-hpa
+  namespace: mint-replica-backend
+  labels:
+    app: mint-replica-lite
+    component: backend
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "HPA configuration for backend API service"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+
+spec:
+  # Target the backend API deployment for scaling
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-api
+
+  # Scaling limits
+  minReplicas: 2  # Minimum replicas for high availability
+  maxReplicas: 20 # Maximum replicas for load handling
+
+  # Scaling metrics
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # Scale when CPU utilization reaches 70%
+
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80  # Scale when memory utilization reaches 80%
+
+  # Scaling behavior configuration
+  behavior:
+    # Scale up behavior
+    scaleUp:
+      # Wait for 60 seconds before scaling up again
+      stabilizationWindowSeconds: 60
+      policies:
+        # Add up to 2 pods every 60 seconds
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+    # Scale down behavior
+    scaleDown:
+      # Wait for 5 minutes before scaling down
+      stabilizationWindowSeconds: 300
+      policies:
+        # Remove 1 pod every 2 minutes
+        - type: Pods
+          value: 1
+          periodSeconds: 120

@@ -1,0 +1,82 @@
+# Human Tasks:
+# 1. Verify that no sensitive files or directories exist in the repository before initial commit
+# 2. Ensure .env.example is created with safe placeholder values
+# 3. Configure HashiCorp Vault integration separately as per deployment guide
+
+# Python bytecode and cache
+# REQ: Security Infrastructure - Prevents exposure of compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+*.so
+
+# Python packaging and distribution
+# REQ: Security Infrastructure - Prevents committing build artifacts
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment and configuration
+# REQ: Security Infrastructure, Secret Management - Prevents exposure of sensitive configuration
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Testing and coverage
+# REQ: Security Infrastructure - Prevents committing test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE specific files
+# REQ: Security Infrastructure - Prevents committing IDE-specific configurations
+.idea/
+.vscode/
+
+# Logs and temporary files
+# REQ: Data Security - Prevents exposure of operational data
+*.log
+logs/
+
+# Database files
+# REQ: Data Security - Prevents committing local database files
+*.sqlite
+*.db
+
+# Celery specific
+# REQ: Security Infrastructure - Prevents committing process-specific files
+celerybeat-schedule
+celerybeat.pid
+
+# Type checking
+# REQ: Security Infrastructure - Prevents committing cache files
+.mypy_cache/
+
+# Docker
+# REQ: Security Infrastructure - Prevents committing container artifacts
+.docker/
+
+# Security and certificates
+# REQ: Data Security, Secret Management - Prevents exposure of sensitive security files
+*.key
+*.pem
+*.crt
+*.csr
+secrets/
+vault/
+
+# Infrastructure as Code
+# REQ: Security Infrastructure, Secret Management - Prevents exposure of infrastructure state
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Node.js (for any frontend builds in backend context)
+# REQ: Security Infrastructure - Prevents committing dependency files
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log

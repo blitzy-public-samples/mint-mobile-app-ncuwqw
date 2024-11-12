@@ -1,0 +1,203 @@
+# Human Tasks:
+# 1. Verify AWS gp2 storage class is available in the cluster
+# 2. Ensure monitoring namespace has required resource quotas
+# 3. Validate network policies are enabled on the cluster
+# 4. Configure backup retention policies for trace data
+# 5. Review security group settings for cross-AZ communication
+
+# Grafana Tempo Helm Chart Version: 0.9.0
+# Kubernetes Version: v1.24+
+
+# Global settings
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+global:
+  clusterDomain: cluster.local
+  podLabels:
+    app: mint-replica-lite
+    component: monitoring
+
+# Main Tempo configuration
+# Addresses requirement: Distributed Tracing (2.5.1 Production Environment)
+tempo:
+  replicas: 2
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+    requests:
+      memory: 1Gi
+      cpu: 500m
+  retention: 168h  # 7 days retention
+  storage:
+    size: 20Gi
+    storageClassName: gp2
+
+# Distributor configuration for trace ingestion
+# Addresses requirement: Request Monitoring (2.5.3 Scalability Architecture)
+distributor:
+  replicas: 2
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+  receivers:
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:14250"
+        thrift_http:
+          endpoint: "0.0.0.0:14268"
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+
+# Ingester configuration for trace storage
+# Addresses requirement: Distributed Tracing (2.5.1 Production Environment)
+ingester:
+  replicas: 2
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+    requests:
+      memory: 1Gi
+      cpu: 500m
+  trace_retention: 168h
+  max_block_duration: 1h
+
+# Querier configuration for trace search
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+querier:
+  replicas: 2
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+  max_concurrent_queries: 10
+  query_timeout: 30s
+
+# Compactor configuration for storage optimization
+# Addresses requirement: Distributed Tracing (2.5.1 Production Environment)
+compactor:
+  replicas: 1
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+  compaction_window: 1h
+  retention: 168h
+
+# Persistence configuration
+# Addresses requirement: System Observability (2.5.4 Availability Architecture)
+persistence:
+  enabled: true
+  storageClass: gp2
+  size: 20Gi
+  annotations:
+    backup.velero.io/backup-volumes: tempo-data
+
+# Security configuration
+# Addresses requirements from imported network-policies.yaml and rbac.yaml
+rbac:
+  create: true
+  serviceAccount:
+    create: true
+    name: tempo
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/tempo-service-role"
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+networkPolicy:
+  enabled: true
+  annotations:
+    network.kubernetes.io/policy-type: Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: mint-replica-monitoring
+        - podSelector:
+            matchLabels:
+              app: mint-replica-lite
+
+# Service configuration
+# Addresses requirement: Request Monitoring (2.5.3 Scalability Architecture)
+service:
+  type: ClusterIP
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3200"
+  ports:
+    jaeger-grpc:
+      port: 14250
+      targetPort: 14250
+      protocol: TCP
+    jaeger-thrift-http:
+      port: 14268
+      targetPort: 14268
+      protocol: TCP
+    otlp-grpc:
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    otlp-http:
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    tempo-query:
+      port: 3200
+      targetPort: 3200
+      protocol: TCP
+
+# Metrics and monitoring configuration
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+# High availability configuration
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - tempo
+        topologyKey: kubernetes.io/hostname
+
+tolerations:
+  - effect: NoSchedule
+    key: dedicated
+    operator: Equal
+    value: monitoring
+
+nodeSelector:
+  kubernetes.io/role: monitoring

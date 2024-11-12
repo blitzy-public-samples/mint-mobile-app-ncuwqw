@@ -1,0 +1,100 @@
+# Human Tasks:
+# 1. Verify WEB_IMAGE and IMAGE_TAG variables are set in Terraform
+# 2. Ensure container registry access is properly configured
+# 3. Validate health check endpoints are implemented in the web application
+# 4. Review resource limits and adjust based on actual usage patterns
+# 5. Confirm namespace exists and has proper resource quotas
+
+# Kubernetes version: v1.24+
+
+---
+# Web Frontend Deployment Configuration
+# Addresses requirements:
+# - Web Application Deployment (2.1 High-Level Architecture Overview/Client Layer)
+# - Container Orchestration (2.5.2 Deployment Architecture/Containerization)
+# - High Availability (2.5.4 Availability Architecture)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-frontend
+  namespace: mint-replica-web
+  labels:
+    app: mint-replica-lite
+    component: web
+    environment: ${ENV}
+  annotations:
+    kubernetes.io/description: "Web frontend deployment for Mint Replica Lite application"
+    kubernetes.io/environment: "${ENV}"
+    kubernetes.io/managed-by: "terraform"
+spec:
+  # High Availability requirement: Maintain minimum 2 replicas
+  replicas: 2
+  
+  # Pod selector for deployment targeting
+  selector:
+    matchLabels:
+      app: mint-replica-lite
+      component: web
+  
+  # Deployment strategy for zero-downtime updates
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  # Pod template specification
+  template:
+    metadata:
+      labels:
+        app: mint-replica-lite
+        component: web
+    spec:
+      # Service account with container registry access
+      serviceAccountName: web-service
+      
+      # Security context for non-root execution
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      containers:
+      - name: web-frontend
+        image: ${WEB_IMAGE}:${IMAGE_TAG}
+        imagePullPolicy: IfNotPresent
+        
+        # Container port configuration
+        ports:
+        - containerPort: 3000
+          name: http
+        
+        # Resource requirements and limits
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        
+        # Environment configuration from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: web-config
+        
+        # Liveness probe for container health monitoring
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        
+        # Readiness probe for traffic routing
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 5
